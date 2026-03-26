@@ -1,0 +1,17 @@
+{
+  "name": "Mymatti",
+  "short_name": "Mymatti",
+  "description": "Din personlige guide til E-numre og krydsallergi.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#FBFBFD",
+  "theme_color": "#007AFF",
+  "icons": [
+    {
+      "src": "icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
