@@ -3,7 +3,7 @@ import pandas as pd
 import time
 import os
 
-# 1. Mymatti Konfiguration - bruger nu de genererede ikon-filer
+# 1. Mymatti Konfiguration
 st.set_page_config(
     page_title="Mymatti", 
     page_icon="favicon.png", 
@@ -13,13 +13,11 @@ st.set_page_config(
 # 2. Apple UI Design & Dark Mode Fix
 st.markdown("""
     <style>
-    /* Tvinger lys baggrund og mørk tekst */
     [data-testid="stAppViewContainer"] { background-color: #FBFBFD !important; }
     [data-testid="stAppViewContainer"], p, h1, h2, h3, h4, h5, h6, span { color: #1D1D1F !important; }
     
     #MainMenu, footer, header {visibility: hidden;}
     
-    /* Centrer logo og titel */
     .header-container {
         display: flex;
         flex-direction: column;
@@ -28,7 +26,6 @@ st.markdown("""
         margin-bottom: 20px;
     }
 
-    /* iOS-style Søgefelt */
     .stTextInput input {
         font-size: 18px !important;
         padding: 16px 24px !important;
@@ -39,7 +36,6 @@ st.markdown("""
         box-shadow: 0 4px 12px rgba(0,0,0,0.05) !important;
     }
     
-    /* Matti Card Design */
     .matti-card {
         background: white; 
         border-radius: 28px; 
@@ -65,7 +61,7 @@ cross_data = {
     "Lateks": ["Avocado", "Banan", "Kiwi", "Figen"]
 }
 
-# 4. App Header med det store 512px ikon for bedste kvalitet
+# 4. App Header
 st.markdown('<div class="header-container">', unsafe_allow_html=True)
 if os.path.exists("icon-512.png"):
     st.image("icon-512.png", width=120)
@@ -76,7 +72,8 @@ st.markdown("<h1 style='font-weight: 800; font-size: 42px; margin-top: 10px; mar
 st.markdown("<p style='font-size: 18px; color: #8E8E93 !important; font-weight: 500;'>Seriøs viden. Let at forstå.</p>", unsafe_allow_html=True)
 st.markdown('</div>', unsafe_allow_html=True)
 
-tabs = st.tabs(["🔍 Opslag", "📋 Liste", "🤧 Krydsallergi", "🕵️ Detektiven"])
+# Vi har nu kun 3 faner her, da "Listen" er flyttet til Bibliotek-siden
+tabs = st.tabs(["🔍 Opslag", "🤧 Krydsallergi", "🕵️ Detektiven"])
 
 # --- FANE 1: OPSLAG ---
 with tabs[0]:
@@ -101,14 +98,11 @@ with tabs[0]:
                     </div>
                 </div>
                 """, unsafe_allow_html=True)
+        else:
+            st.info("Ingen resultater fundet. Prøv Biblioteket i menuen til venstre for en komplet liste.")
 
-# --- FANE 2: LISTE ---
+# --- FANE 2: KRYDSALLERGI ---
 with tabs[1]:
-    st.markdown("### Komplet E-nummer oversigt")
-    st.dataframe(df[['E-Number', 'Scientific Name', 'Risk Category']], use_container_width=True, hide_index=True)
-
-# --- FANE 3: KRYDSALLERGI ---
-with tabs[2]:
     st.markdown("### Tjek din krydsallergi")
     food_search = st.text_input("Indtast fødevare", placeholder="F.eks. Gulerod...", key="cross_search")
     if food_search:
@@ -119,8 +113,8 @@ with tabs[2]:
         else:
             st.success("Ingen almindelige krydsallergier fundet for dette emne.")
 
-# --- FANE 4: DETEKTIVEN ---
-with tabs[3]:
+# --- FANE 3: DETEKTIVEN ---
+with tabs[2]:
     st.markdown("### Symptom Detektiven")
     st.camera_input("Scan ingredienslisten")
     st.multiselect("Hvordan har du det?", ["Ondt i maven", "Hovedpine", "Hyperaktiv", "Træt", "Hududslæt"])
