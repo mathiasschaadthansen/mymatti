@@ -10,7 +10,7 @@ st.markdown("""
     <style>
     [data-testid="stAppViewContainer"] { background-color: #FBFBFD !important; }
     [data-testid="stAppViewContainer"], p, h1, h2, h3, h4, h5, h6, span { color: #1D1D1F !important; }
-    #MainMenu, footer, header {visibility: hidden;}
+    #MainMenu, footer, {visibility: hidden;}
     .header-container { display: flex; flex-direction: column; align-items: center; margin-top: -30px; margin-bottom: 20px; }
     .stTextInput input {
         font-size: 18px !important; padding: 16px 24px !important; border-radius: 22px !important;
