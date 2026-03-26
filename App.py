@@ -1,19 +1,22 @@
 import streamlit as st
 import pandas as pd
 import time
+import os
 
-# 1. Mymatti Konfiguration med det nye ikon
+# 1. Mymatti Konfiguration - bruger nu de genererede ikon-filer
 st.set_page_config(
     page_title="Mymatti", 
-    page_icon="icon.png", 
+    page_icon="favicon.png", 
     layout="centered"
 )
 
 # 2. Apple UI Design & Dark Mode Fix
 st.markdown("""
     <style>
+    /* Tvinger lys baggrund og mørk tekst */
     [data-testid="stAppViewContainer"] { background-color: #FBFBFD !important; }
     [data-testid="stAppViewContainer"], p, h1, h2, h3, h4, h5, h6, span { color: #1D1D1F !important; }
+    
     #MainMenu, footer, header {visibility: hidden;}
     
     /* Centrer logo og titel */
@@ -32,6 +35,7 @@ st.markdown("""
         border-radius: 22px !important;
         border: 1px solid #D1D1D6 !important;
         background-color: #FFFFFF !important;
+        color: #1D1D1F !important;
         box-shadow: 0 4px 12px rgba(0,0,0,0.05) !important;
     }
     
@@ -61,9 +65,13 @@ cross_data = {
     "Lateks": ["Avocado", "Banan", "Kiwi", "Figen"]
 }
 
-# 4. App Header med Logo
+# 4. App Header med det store 512px ikon for bedste kvalitet
 st.markdown('<div class="header-container">', unsafe_allow_html=True)
-st.image("icon.png", width=120)
+if os.path.exists("icon-512.png"):
+    st.image("icon-512.png", width=120)
+else:
+    st.image("icon.png", width=120)
+
 st.markdown("<h1 style='font-weight: 800; font-size: 42px; margin-top: 10px; margin-bottom: 0;'>Mymatti</h1>", unsafe_allow_html=True)
 st.markdown("<p style='font-size: 18px; color: #8E8E93 !important; font-weight: 500;'>Seriøs viden. Let at forstå.</p>", unsafe_allow_html=True)
 st.markdown('</div>', unsafe_allow_html=True)
