@@ -48,7 +48,7 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-st.markdown("Søg på en fødevare (f.eks. Æble, Rejer eller Svinekød) og se, hvilke grundallergier den kan drille sammen med.")
+st.markdown("Søg på en fødevare (f.eks. Æble, Rejer eller Svinekød) og se, hvilke andre ting den kan drille sammen med.")
 
 # Den udtømmende kliniske database
 cross_data = {
@@ -66,15 +66,15 @@ cross_data = {
     "Skimmelsvamp (Alternaria)": ["Spinat", "Champignon", "Portobello", "Cremini", "Quorn", "Spisesvampe"],
     "Skimmelsvamp (Penicillium/Aspergillus)": ["Spisesvampe", "Gær", "Saccharomyces", "Fermenterede fødevarer", "Lagrede drikkevarer"],
     "Husstøvmider": ["Rejer", "Tigerreje", "Nordsøreje", "Hummer", "Jomfruhummer", "Krabber", "Krebs", "Blåmusling", "Kammusling", "Østers", "Snegle", "Vinbjergsnegle", "Søører", "Abalone", "Tiarmede blæksprutter", "Squid", "Cuttlefish", "Ottearmede blæksprutter", "Octopus", "Kakerlak", "Melorme", "Fårekyllinger", "Karmin", "E120"],
-    "Katteallergi (Skæl/Hår)": ["Svinekød", "Pølser", "Bacon", "Komælk", "Oksekød", "Lammekød"],
-    "Hundeallergi (Skæl/Hår)": ["Svinekød", "Pølser", "Bacon", "Komælk", "Oksekød", "Lammekød"],
-    "Hesteallergi (Skæl/Hår)": ["Svinekød", "Pølser", "Bacon", "Komælk", "Oksekød", "Lammekød"],
-    "Fugleallergi (Fjer/Klat)": ["Æggeblomme", "Kyllingekød", "Kalkunkød", "Andekød"],
+    "Katte (Skæl/Hår)": ["Svinekød", "Pølser", "Bacon", "Komælk", "Oksekød", "Lammekød"],
+    "Hunde (Skæl/Hår)": ["Svinekød", "Pølser", "Bacon", "Komælk", "Oksekød", "Lammekød"],
+    "Heste (Skæl/Hår)": ["Svinekød", "Pølser", "Bacon", "Komælk", "Oksekød", "Lammekød"],
+    "Fugle (Fjer/Klat)": ["Æggeblomme", "Kyllingekød", "Kalkunkød", "Andekød"],
     "Alfa-gal (Skovflåtbid)": ["Oksekød", "Svinekød", "Lammekød", "Vildtkød", "Bison", "Kaninkød", "Hestekød", "Gedekød", "Egern", "Kænguru", "Antilope", "Bøffel", "Kamel", "Hvalkød", "Lever", "Nyrer", "Hjerte", "Tarm", "Svineskind", "Tarmskind", "Pølseskind", "Brisler", "Blodpølse", "Svinefedt", "Ister", "Oksefedt", "Talg", "Spæk", "Fond", "Bouillon", "Sauce", "Gelatine", "Knoglemarv", "Kødekstrakt", "Komælk", "Fåremælk", "Gedemælk", "Ost", "Flødeost", "Mælkeprotein", "Oksekollagen", "Gelatine-kapsler", "Medicinsk glycerin", "Magnesiumstearat", "Carrageenan", "E407"]
 }
 
 # De allergier, der kræver ekstra forsigtighed (rød advarsel)
-severe_allergies = ["Husstøvmider", "Alfa-gal (Skovflåtbid)", "Katteallergi (Skæl/Hår)", "Hundeallergi (Skæl/Hår)", "Hesteallergi (Skæl/Hår)", "Fugleallergi (Fjer/Klat)", "Latex (Naturgummi)", "Platanpollen"]
+severe_allergies = ["Husstøvmider", "Alfa-gal (Skovflåtbid)", "Katte (Skæl/Hår)", "Hunde (Skæl/Hår)", "Heste (Skæl/Hår)", "Fugle (Fjer/Klat)", "Latex (Naturgummi)", "Platanpollen"]
 
 food_search = st.text_input("", placeholder="Tast en fødevare her...")
 
@@ -85,23 +85,23 @@ if food_search:
             found_matches.append(allergen)
             
     if found_matches:
-        st.error(f"⚠️ Hvis du spiser **{food_search.lower()}**, skal du være opmærksom på følgende grundallergier:")
+        st.error(f"⚠️ Hvis du spiser **{food_search.lower()}**, skal du være opmærksom på følgende:")
         
         for match in found_matches:
             if match in severe_allergies:
                 st.markdown(f"""
                 <div class="warning-severe">
-                    <span style="font-size: 18px;">🚨</span> <b>Grundallergi: {match}</b><br>
-                    <b>Vigtigt:</b> Hvis du har allergi over for {match.lower()}, kan din krop reagere på <b>{food_search.lower()}</b>. De proteiner, der udløser reaktionen, forsvinder sjældent ved opvarmning. Du kan altså reagere kraftigt i hele kroppen, uanset om maden er rå, kogt eller stegt.<br><br>
-                    <i>Andre fødevarer, man ofte reagerer på ved {match.lower()}:</i> {', '.join(cross_data[match][:8])}...
+                    <span style="font-size: 18px;">🚨</span> <b>Krydsallergi: {match}</b><br>
+                    <b>Vigtigt:</b> Hvis du i forvejen reagerer på {match.lower()}, kan din krop krydsreagere, når du spiser <b>{food_search.lower()}</b>. De proteiner, der udløser reaktionen, forsvinder sjældent ved opvarmning. Du kan altså reagere kraftigt i hele kroppen, uanset om maden er rå, kogt eller stegt.<br><br>
+                    <i>Andre fødevarer der ofte driller ved {match.lower()}:</i> {', '.join(cross_data[match][:8])}...
                 </div>
                 """, unsafe_allow_html=True)
             else:
                 st.markdown(f"""
                 <div class="warning-mild">
-                    <span style="font-size: 18px;">💡</span> <b>Grundallergi: {match}</b><br>
-                    <b>Godt at vide:</b> Hvis du er allergisk over for {match.lower()}, forveksler din krop det nogle gange med <b>{food_search.lower()}</b>. Du vil nok mest mærke det som mild kløe eller prikken i mund og læber. Det smarte er, at du som regel sagtens kan spise fødevaren, hvis den bare er blevet kogt eller bagt først.<br><br>
-                    <i>Andre fødevarer, der typisk krydsreagerer med {match.lower()}:</i> {', '.join(cross_data[match][:8])}...
+                    <span style="font-size: 18px;">💡</span> <b>Krydsallergi: {match}</b><br>
+                    <b>Godt at vide:</b> Hvis du reagerer på {match.lower()}, forveksler din krop det nogle gange med proteinerne i <b>{food_search.lower()}</b>. Du vil oftest mærke det som mild kløe eller prikken i mund og læber. Reaktionen forsvinder typisk, hvis du koger eller bager fødevaren.<br><br>
+                    <i>Andre fødevarer der ofte krydsreagerer med {match.lower()}:</i> {', '.join(cross_data[match][:8])}...
                 </div>
                 """, unsafe_allow_html=True)
     else:
