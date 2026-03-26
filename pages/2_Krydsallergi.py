@@ -22,31 +22,33 @@ st.markdown("""
     .warning-mild {
         background-color: #FFF9E6;
         border-left: 5px solid #FFCC00;
-        padding: 15px;
-        border-radius: 8px;
-        margin-top: 10px;
+        padding: 18px;
+        border-radius: 12px;
+        margin-top: 15px;
+        line-height: 1.5;
     }
     .warning-severe {
         background-color: #FFF2F2;
         border-left: 5px solid #FF3B30;
-        padding: 15px;
-        border-radius: 8px;
-        margin-top: 10px;
+        padding: 18px;
+        border-radius: 12px;
+        margin-top: 15px;
+        line-height: 1.5;
     }
     </style>
     """, unsafe_allow_html=True)
 
 st.title("🤧 Krydsallergi Detektiven")
 
-# Tydelig Medicinsk Disclaimer
+# Tydelig, men letlæselig Disclaimer
 st.markdown("""
 <div class="disclaimer-box">
-    <b>⚠️ Vigtig Sundhedsfaglig Ansvarsfraskrivelse</b><br>
-    Mymatti er et vejledende informationsværktøj baseret på generel klinisk forskning. Oplysningerne heri erstatter <b>ikke</b> professionel medicinsk rådgivning, diagnose eller behandling. Ved mistanke om alvorlig allergi, eller hvis du oplever symptomer som hævelse i svælg eller vejrtrækningsbesvær, skal du straks søge læge eller ringe 112.
+    <b>⚠️ Mattis Huskeregel</b><br>
+    Selvom Mymatti bygger på anerkendt forskning, er appen din smarte guide og ikke en læge. Oplever du hævelser i svælget eller får svært ved at trække vejret, skal du straks søge læge eller ringe 112.
 </div>
 """, unsafe_allow_html=True)
 
-st.markdown("Søg på en fødevare og se præcis hvilke pollen, mider eller dyr, den kan krydsreagere med.")
+st.markdown("Søg på en fødevare (f.eks. Æble, Rejer eller Svinekød) og se, hvad den kan drille sammen med.")
 
 # Den udtømmende kliniske database
 cross_data = {
@@ -69,9 +71,11 @@ cross_data = {
     "Alfa-gal (Skovflåtbid)": ["Oksekød", "Svinekød", "Lammekød", "Vildtkød", "Bison", "Kaninkød", "Hestekød", "Gedekød", "Egern", "Kænguru", "Antilope", "Bøffel", "Kamel", "Hvalkød", "Lever", "Nyrer", "Hjerte", "Tarm", "Svineskind", "Tarmskind", "Pølseskind", "Brisler", "Blodpølse", "Svinefedt", "Ister", "Oksefedt", "Talg", "Spæk", "Fond", "Bouillon", "Sauce", "Gelatine", "Knoglemarv", "Kødekstrakt", "Komælk", "Fåremælk", "Gedemælk", "Ost", "Flødeost", "Mælkeprotein", "Oksekollagen", "Gelatine-kapsler", "Medicinsk glycerin", "Magnesiumstearat", "Carrageenan", "E407"]
 }
 
+# De allergier, der kræver ekstra forsigtighed (rød advarsel)
 severe_allergies = ["Husstøvmider", "Alfa-gal (Skovflåtbid)", "Katteallergi (Skæl/Hår)", "Fugleallergi (Fjer/Klat)", "Latex (Naturgummi)", "Platanpollen"]
 
-food_search = st.text_input("Indtast fødevare", placeholder="F.eks. Melon, Rejer eller Svinekød...")
+food_search = st.text_input("", placeholder="Tast en fødevare her...")
+
 if food_search:
     found_matches = []
     for allergen, foods in cross_data.items():
@@ -79,22 +83,24 @@ if food_search:
             found_matches.append(allergen)
             
     if found_matches:
-        st.error(f"⚠️ **{food_search.capitalize()}** krydsreagerer ofte med følgende allergener:")
+        st.error(f"⚠️ **{food_search.capitalize()}** driller ofte folk med allergi overfor:")
         
         for match in found_matches:
             if match in severe_allergies:
                 st.markdown(f"""
                 <div class="warning-severe">
-                    <b>{match}</b><br>
-                    Denne type krydsallergi er ofte varmestabil og kan udløse systemiske reaktioner eller svær anafylaksi uanset om maden er tilberedt. Andre kilder til denne reaktion: {', '.join(cross_data[match][:10])}...
+                    <span style="font-size: 18px;">🚨</span> <b>{match}</b><br>
+                    <b>Vigtigt:</b> Denne type allergi forsvinder sjældent ved opvarmning. Det betyder, at du kan reagere kraftigt (i hele kroppen), uanset om maden er rå, kogt eller stegt.<br><br>
+                    <i>Folk der reagerer på dette, reagerer ofte også på:</i> {', '.join(cross_data[match][:8])}...
                 </div>
                 """, unsafe_allow_html=True)
             else:
                 st.markdown(f"""
                 <div class="warning-mild">
-                    <b>{match}</b><br>
-                    Dette er primært et Oralt Allergisyndrom (OAS). Symptomerne mærkes oftest kun i mund/svælg, og de fleste tåler fødevaren, hvis den bliver kogt eller bagt. Andre relaterede fødevarer: {', '.join(cross_data[match][:10])}...
+                    <span style="font-size: 18px;">💡</span> <b>{match}</b><br>
+                    <b>Godt at vide:</b> Du vil nok mest mærke det som mild kløe eller prikken i mund og læber. Det smarte er, at mange sagtens kan spise det, hvis maden bare er blevet kogt eller bagt først.<br><br>
+                    <i>Andre ting der ofte driller i denne gruppe:</i> {', '.join(cross_data[match][:8])}...
                 </div>
                 """, unsafe_allow_html=True)
     else:
-        st.success("Ingen almindelige krydsallergier fundet for dette emne.")
+        st.success(f"✅ Vi fandt ingen kendte krydsallergier for '{food_search}'.")
