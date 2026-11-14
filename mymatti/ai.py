@@ -11,7 +11,7 @@ from .core import ALLERGENS, CATEGORIES, LOCATIONS, UNITS, check_recipe, days_le
 from .storage import secret
 
 API = "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
-DEFAULT_MODEL = "gemini-flash-latest"
+DEFAULT_MODEL = "gemini-flash-lite-latest"  # billigst og hurtigst; kan ændres med GEMINI_MODEL
 
 
 class AIError(RuntimeError):
