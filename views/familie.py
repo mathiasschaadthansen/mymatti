@@ -1,7 +1,7 @@
 import streamlit as st
 
 from mymatti import core
-from views.common import DISCLAIMER, flash, load_state, save_state, show_flash
+from views.common import DEFAULT_THEME, DISCLAIMER, THEMES, flash, load_state, save_state, show_flash
 
 
 def render() -> None:
@@ -21,6 +21,15 @@ def render() -> None:
         _member_form(state, None)
 
     st.warning(DISCLAIMER)
+
+    st.subheader("Farvetema")
+    current = state["settings"].get("theme") if state["settings"].get("theme") in THEMES else DEFAULT_THEME
+    chosen = st.segmented_control("Farvetema", list(THEMES), default=current, label_visibility="collapsed")
+    if chosen and chosen != current:
+        state["settings"]["theme"] = chosen
+        save_state(state)
+        st.rerun()
+    st.caption("Temaet gælder for alle, der bruger appen i jeres husstand.")
 
     st.subheader("Indstillinger")
     with st.form("settings"):

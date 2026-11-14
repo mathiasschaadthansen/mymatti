@@ -5,6 +5,7 @@ import streamlit as st
 
 from mymatti import storage
 from views import beholdning, familie, indkob, opskrifter, overblik
+from views.common import theme_css
 
 st.set_page_config(page_title="Mymatti", page_icon="favicon.png", layout="centered")
 
@@ -19,7 +20,7 @@ div[data-testid="stVerticalBlockBorderWrapper"] {background: #FFFFFF;}
 
 /* Nøgletal på forsiden: fire små felter på én række, også på telefon */
 .mm-stats {display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin: 4px 0 12px;}
-.mm-stat {background: #FFFFFF; border: 1px solid #D9E0D8; border-radius: 14px; padding: 10px 6px; text-align: center;}
+.mm-stat {background: #FFFFFF; border: 1px solid var(--mm-line); border-radius: 14px; padding: 10px 6px; text-align: center;}
 .mm-stat b {display: block; font-size: 1.6rem; line-height: 1.1; font-variant-numeric: tabular-nums;}
 .mm-stat span {font-size: 0.72rem; color: #5D6B63;}
 .mm-stat.warn {border-color: #E0A23A; background: #FFF7E8;}
@@ -27,13 +28,19 @@ div[data-testid="stVerticalBlockBorderWrapper"] {background: #FFFFFF;}
 
 /* Fast menu i bunden, så siderne kan nås med tommelfingeren */
 .st-key-tabbar {position: fixed; left: 0; right: 0; bottom: 0; z-index: 999; background: #FFFFFF;
-  border-top: 1px solid #D9E0D8; padding: 6px 6px calc(6px + env(safe-area-inset-bottom, 0px));
+  border-top: 1px solid var(--mm-line); padding: 6px 6px calc(6px + env(safe-area-inset-bottom, 0px));
   display: flex; flex-direction: row; flex-wrap: nowrap; justify-content: center; gap: 2px;}
 .st-key-tabbar > div {flex: 1 1 0; min-width: 0; max-width: 150px; width: auto;}
 .st-key-tabbar a {display: flex; flex-direction: column; align-items: center; justify-content: center;
   gap: 2px; padding: 6px 2px; border-radius: 12px; min-height: 52px;}
 .st-key-tabbar a p {font-size: 0.72rem; text-align: center; white-space: nowrap;}
 .st-key-tabbar a span[data-testid="stIconEmoji"] {font-size: 1.3rem;}
+
+/* Lagerkort: knapperne står på én række og er store nok til en finger */
+[class*="st-key-card_"] {background: #FFFFFF; gap: 0.5rem; padding: 0.8rem 1rem;}
+[class*="st-key-card_"] p {margin-bottom: 0;}
+[class*="st-key-cardrow_"] button {min-width: 48px; min-height: 44px;}
+.mm-fresh {font-size: 0.85rem; color: #5D6B63;}
 </style>
 """, unsafe_allow_html=True)
 
@@ -65,6 +72,8 @@ PAGES = [
 ]
 page = st.navigation(PAGES, position="hidden")
 page.run()
+
+st.markdown(theme_css(st.session_state.get("theme"), page.url_path), unsafe_allow_html=True)
 
 with st.container(key="tabbar"):
     for item, label in zip(PAGES, ["Overblik", "Lager", "Opskrifter", "Indkøb", "Familie"]):

@@ -4,7 +4,7 @@ import pandas as pd
 import streamlit as st
 
 from mymatti import ai, core
-from views.common import flash, load_state, save_state, show_flash
+from views.common import flash, freshness_label, load_state, save_state, show_flash
 
 COLS = ["id", "Vare", "Mængde", "Enhed", "Kategori", "Placering", "Udløber", "Minimum"]
 
@@ -88,8 +88,14 @@ def render() -> None:
                 st.markdown(f"- **{name}**: {'; '.join(hits)}")
             st.caption("Disse varer bliver holdt ude af opskrifter til de berørte personer.")
 
-    version = st.session_state.setdefault("inv_version", 0)
     ordered = sorted(state["inventory"], key=lambda i: (core.days_left(i) is None, core.days_left(i) or 0))
+    view = st.segmented_control("Visning", ["Kort", "Tabel"], default="Kort", key="inv_view",
+                                label_visibility="collapsed")
+    if view != "Tabel":
+        _cards(state, ordered, {name for name, _ in flagged})
+        return
+
+    version = st.session_state.setdefault("inv_version", 0)
     original = _frame(ordered)
     edited = _editor(original, f"inv_{version}")
     st.caption("Ret direkte i tabellen. Tilføj en række nederst, eller markér rækker og slet dem. "
@@ -100,6 +106,74 @@ def render() -> None:
         save_state(state)
         st.session_state["inv_version"] = version + 1
         st.rerun()
+
+
+# Hvor meget ét tryk på plus/minus ændrer, afhængigt af enheden.
+STEP = {"g": 100.0, "ml": 100.0, "kg": 0.5, "l": 0.5}
+
+
+def _cards(state: dict, ordered: list[dict], flagged: set[str]) -> None:
+    """Lageret som kort – ét pr. vare – så det kan bruges med én hånd på telefonen."""
+    where = st.segmented_control("Placering", ["Alle"] + core.LOCATIONS, default="Alle", key="inv_where",
+                                 label_visibility="collapsed") or "Alle"
+    shown = [i for i in ordered if where == "Alle" or i["location"] == where]
+    if state["inventory"] and not shown:
+        st.caption(f"Ingen varer i {where.lower()}.")
+    for item in shown:
+        step = STEP.get(item["unit"], 1.0)
+        with st.container(border=True, key=f"card_{item['id']}"):
+            warn = " ⚠️" if item["name"] in flagged else ""
+            details = [item["location"], freshness_label(item)]
+            if item.get("min_qty"):
+                details.append(f"📌 minimum {core.fmt_qty(item['min_qty'], item['unit'])}")
+            st.markdown(f"**{item['name']}**{warn} · {core.fmt_qty(item['qty'], item['unit'])}  \n"
+                        f"<span class='mm-fresh'>{' · '.join(d for d in details if d)}</span>",
+                        unsafe_allow_html=True)
+            with st.container(horizontal=True, key=f"cardrow_{item['id']}"):
+                if st.button("−", key=f"minus_{item['id']}", help=f"Brugt {core.fmt_qty(step, item['unit'])}"):
+                    core.deduct(state, item["id"], step)
+                    _commit(state)
+                if st.button("＋", key=f"plus_{item['id']}", help=f"Læg {core.fmt_qty(step, item['unit'])} til"):
+                    item["qty"] = round(item["qty"] + step, 3)
+                    _commit(state)
+                with st.popover("Ret"):
+                    _edit_form(state, item)
+
+
+def _commit(state: dict, message: str | None = None) -> None:
+    core.sync_staples(state)
+    save_state(state)
+    if message:
+        flash(message)
+    st.rerun()
+
+
+def _edit_form(state: dict, item: dict) -> None:
+    with st.form(f"edit_{item['id']}"):
+        name = st.text_input("Vare", item["name"])
+        c1, c2 = st.columns(2)
+        qty = c1.number_input("Mængde", 0.0, 100000.0, float(item["qty"]), step=STEP.get(item["unit"], 1.0))
+        unit = c2.selectbox("Enhed", core.UNITS, index=core.UNITS.index(item["unit"]))
+        location = st.selectbox("Placering", core.LOCATIONS, index=core.LOCATIONS.index(item["location"]))
+        category = st.selectbox("Kategori", core.CATEGORIES, index=core.CATEGORIES.index(item["category"]))
+        no_date = st.checkbox("Ingen udløbsdato", value=not item.get("expires"))
+        expires = st.date_input("Udløber", _to_date(item.get("expires")) or date.today(), format="DD.MM.YYYY")
+        minimum = st.number_input("Minimum (fast vare – 0 for ikke fast)", 0.0, 100000.0,
+                                  float(item.get("min_qty") or 0))
+        c3, c4 = st.columns(2)
+        save = c3.form_submit_button("Gem", type="primary", width="stretch")
+        delete = c4.form_submit_button("Slet vare", width="stretch")
+    if save and name.strip():
+        updated = core.make_item({
+            "id": item["id"], "name": name, "qty": qty, "unit": unit, "location": location,
+            "category": category, "expires": None if no_date else expires.isoformat(), "min_qty": minimum,
+        })
+        updated["qty"] = qty  # make_item behandler 0 som "ukendt"
+        item.update(updated)
+        _commit(state, f"{updated['name']} opdateret")
+    if delete:
+        state["inventory"] = [i for i in state["inventory"] if i["id"] != item["id"]]
+        _commit(state, f"{item['name']} slettet")
 
 
 def _add_section(state: dict) -> None:
