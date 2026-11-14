@@ -20,11 +20,12 @@ def render() -> None:
 
     soon = core.expiring(state, 3)
     low = core.low_stock(state)
-    cols = st.columns(4)
-    cols[0].metric("På lager", len([i for i in state["inventory"] if i["qty"] > 0]))
-    cols[1].metric("Brug snart", len(soon))
-    cols[2].metric("Mangler", len(low))
-    cols[3].metric("Indkøb", len(state["shopping"]))
+    in_stock = len([i for i in state["inventory"] if i["qty"] > 0])
+    stats = [("På lager", in_stock, ""), ("Brug snart", len(soon), "warn" if soon else ""),
+             ("Mangler", len(low), "alert" if low else ""), ("Indkøb", len(state["shopping"]), "")]
+    st.markdown('<div class="mm-stats">' + "".join(
+        f'<div class="mm-stat {cls}"><b>{value}</b><span>{label}</span></div>' for label, value, cls in stats
+    ) + "</div>", unsafe_allow_html=True)
 
     budget = state["settings"].get("budget_month") or 0
     if budget:
