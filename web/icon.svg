@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Fuld flade: iOS og Android runder selv hjørnerne. Motivet holdes inden for midterste 80 %. -->
+  <rect width="512" height="512" fill="#1F6F4A"/>
+  <circle cx="256" cy="268" r="168" fill="#24804F"/>
+  <!-- blad -->
+  <path d="M262 214 C262 150 302 112 362 104 C366 168 330 210 262 214 Z" fill="#9EE0B4"/>
+  <path d="M262 214 C290 182 314 156 344 126" stroke="#1F6F4A" stroke-width="9" stroke-linecap="round" fill="none"/>
+  <!-- stilk -->
+  <path d="M256 232 C256 212 258 200 262 190" stroke="#9EE0B4" stroke-width="14" stroke-linecap="round" fill="none"/>
+  <!-- skål -->
+  <path d="M116 244 H396 C396 330 334 384 256 384 C178 384 116 330 116 244 Z" fill="#FFFFFF"/>
+  <rect x="104" y="230" width="304" height="26" rx="13" fill="#FFFFFF"/>
+  <!-- fod -->
+  <path d="M214 370 H298 L306 400 H206 Z" fill="#FFFFFF"/>
+  <!-- flueben: allergitjekket -->
+  <path d="M208 306 L240 336 L306 274" stroke="#1F6F4A" stroke-width="20" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+</svg>
