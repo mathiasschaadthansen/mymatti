@@ -1,0 +1,11 @@
+# Netlify udgiver mappen web/ som den er – der er intet byggetrin.
+[build]
+  publish = "web"
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "no-referrer"
+    X-Frame-Options = "DENY"
+    Content-Security-Policy = "default-src 'self'; connect-src 'self' https://dmwgqmdvvuognflntjdb.supabase.co; img-src 'self' data: blob:; style-src 'self'; script-src 'self'; frame-ancestors 'none'"
