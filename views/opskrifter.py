@@ -17,6 +17,16 @@ def render() -> None:
         _generator(state)
         safe = [r for r in state["suggestions"] if not r.get("allergy_hits")]
         blocked = [r for r in state["suggestions"] if r.get("allergy_hits")]
+        all_missing = [(r, i) for r in safe for i in r["ingredients"]
+                       if not any(s["id"] == i.get("inventory_id") for s in state["inventory"])]
+        if len(safe) > 1 and all_missing:
+            if st.button(f"🛒 Læg alt, der mangler til de {len(safe)} retter, på indkøbslisten"):
+                for recipe, ing in all_missing:
+                    core.add_shopping(state, ing["name"], ing.get("amount", ""), recipe["title"],
+                                      ing.get("category", "Andet"), source="recipe")
+                save_state(state)
+                flash("Manglende varer lagt på indkøbslisten")
+                st.rerun()
         for recipe in safe:
             _recipe_card(state, recipe, saved=False)
         if blocked:
@@ -53,11 +63,11 @@ def _generator(state: dict) -> None:
             help="Opskrifterne skal være sikre for alle, der spiser med.",
         ) if family else None
         c1, c2, c3 = st.columns(3)
-        meal = c1.selectbox("Måltid", ["Aftensmad", "Frokost", "Morgenmad", "Madpakke", "Bagværk/dessert"])
+        meal = c1.selectbox("Måltid", ["Aftensmad", "Madpakker", "Frokost", "Morgenmad", "Bagværk/dessert"])
         persons = c2.number_input("Personer", 1, 20, int(state["settings"]["persons"]))
-        max_time = c3.select_slider("Maks. tid (min)", [15, 20, 30, 45, 60, 90], value=45)
+        max_time = c3.select_slider("Maks. tid (min)", [15, 20, 30, 45, 60, 90], value=20)
         c4, c5 = st.columns(2)
-        count = c4.slider("Antal forslag", 1, 5, 3)
+        count = c4.slider("Antal forslag", 1, 7, 3, help="Vælg 5-7 for en ugeplan.")
         max_missing = c5.slider("Må købe op til … ekstra varer", 0, 6, 2)
         wishes = st.text_input("Ønsker (valgfrit)", placeholder="Fx børnevenligt, vegetarisk, brug kyllingen")
         go = st.form_submit_button("Find opskrifter", type="primary")
@@ -70,8 +80,10 @@ def _generator(state: dict) -> None:
     profile = core.family_profile(state, eaters)
     # Varer med de spisendes allergener sendes slet ikke til AI'en.
     usable = [i for i in state["inventory"] if not core.check_text(i["name"], profile)]
+    traces = ("Varer med 'kan indeholde spor af' er i orden." if state["settings"].get("traces_ok")
+              else "Undgå også varer, der typisk er mærket 'kan indeholde spor af' allergenerne.")
     opts = {"count": count, "meal": meal, "persons": persons, "max_time": max_time,
-            "max_missing": max_missing, "wishes": wishes}
+            "max_missing": max_missing, "wishes": wishes, "traces": traces}
     try:
         with st.spinner("Finder på retter ud fra jeres lager…"):
             state["suggestions"] = ai.generate_recipes(usable, profile, opts)

@@ -104,13 +104,14 @@ def render() -> None:
 
 def _add_section(state: dict) -> None:
     st.subheader("Tilføj varer")
-    tab_text, tab_photo = st.tabs(["✍️ Skriv", "📷 Foto af køleskab eller bon"])
+    tab_text, tab_photo, tab_staple = st.tabs(["✍️ Skriv", "📷 Foto af køleskab eller bon", "📌 Fast vare"])
 
     with tab_text:
         with st.form("add_text", clear_on_submit=True):
             text = st.text_area(
                 "Hvad har I?", height=110,
-                placeholder="Fx: 2 l letmælk, 500 g hakket oksekød, 6 æg, ris, 3 dåser flåede tomater, løg",
+                placeholder="Fx: 2 l havremælk, 400 g kyllingebryst, ris, 3 dåser flåede tomater, løg",
+                help="Du kan også indsætte teksten fra en ordrebekræftelse fra Bilka ToGo.",
             )
             submitted = st.form_submit_button("Fortolk varer", type="primary")
         if submitted and text.strip():
@@ -125,6 +126,29 @@ def _add_section(state: dict) -> None:
                 items = core.parse_text(text)
             st.session_state["pending"] = [core.make_item(i) for i in items]
             st.session_state["pending_version"] = st.session_state.get("pending_version", 0) + 1
+
+    with tab_staple:
+        st.caption("Faste varer skal altid være i huset. Kommer beholdningen under minimum, "
+                   "lægger appen dem selv på indkøbslisten.")
+        with st.form("add_staple", clear_on_submit=True):
+            c1, c2, c3, c4 = st.columns([3, 2, 2, 2])
+            name = c1.text_input("Vare", placeholder="Fx havregryn")
+            have = c2.number_input("Har nu", 0.0, 1000.0, 0.0, step=1.0)
+            minimum = c3.number_input("Minimum", 0.0, 1000.0, 1.0, step=1.0)
+            unit = c4.selectbox("Enhed", core.UNITS, index=core.UNITS.index("pk"))
+            if st.form_submit_button("Tilføj fast vare") and name.strip() and minimum > 0:
+                existing = next((i for i in state["inventory"] if i["name"].lower() == name.strip().lower()), None)
+                if existing:
+                    existing["min_qty"] = minimum
+                else:
+                    state["inventory"].append(core.make_item(
+                        {"name": name, "qty": have, "unit": unit, "min_qty": minimum, "category": "Kolonial"}))
+                    state["inventory"][-1]["qty"] = have  # make_item behandler 0 som "ukendt"
+                core.sync_staples(state)
+                save_state(state)
+                st.session_state["inv_version"] = st.session_state.get("inv_version", 0) + 1
+                flash(f"{name.strip()} er nu en fast vare")
+                st.rerun()
 
     with tab_photo:
         if not ai.available():
@@ -154,7 +178,7 @@ def _pending_section(state: dict) -> None:
         return
     with st.container(border=True):
         st.markdown("**Tjek varerne, før de lægges på lager**")
-        st.caption("Mængde og holdbarhed er et skøn – ret det, der ikke passer.")
+        st.caption("Mængde og holdbarhed er et skøn. Sæt den rigtige dato på **kød og mejeri** – resten kan stå.")
         edited = _editor(_frame(pending), f"pending_{st.session_state.get('pending_version', 0)}")
         col_ok, col_cancel = st.columns(2)
         if col_ok.button("Læg på lager", type="primary", width="stretch"):

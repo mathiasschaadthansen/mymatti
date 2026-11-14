@@ -32,11 +32,13 @@ def new_id() -> str:
 def empty_state() -> dict:
     return {
         "family": [],
-        "settings": {"persons": 4, "bilka_url": DEFAULT_BILKA_URL},
+        "settings": {"persons": 4, "bilka_url": DEFAULT_BILKA_URL, "budget_month": 0,
+                     "shop_prefs": "Vælg økologisk, når det findes", "traces_ok": True},
         "inventory": [],
         "suggestions": [],
         "saved_recipes": [],
         "shopping": [],
+        "orders": [],
         "log": [],
     }
 
@@ -257,6 +259,18 @@ def receive_purchased(state: dict) -> int:
     return len(bought)
 
 
+def record_order(state: dict, amount: float, today: date | None = None) -> None:
+    """Gem beløbet for en gennemført bestilling, så månedens forbrug kan følges."""
+    if amount and amount > 0:
+        state["orders"].insert(0, {"date": (today or date.today()).isoformat(), "amount": round(amount, 2)})
+        del state["orders"][200:]
+
+
+def month_spent(state: dict, today: date | None = None) -> float:
+    prefix = (today or date.today()).isoformat()[:7]
+    return sum(o["amount"] for o in state["orders"] if o["date"].startswith(prefix))
+
+
 def shopping_as_text(state: dict) -> str:
     lines = []
     for entry in state["shopping"]:
@@ -268,9 +282,14 @@ def shopping_as_text(state: dict) -> str:
 def handle_prompt(state: dict, profile: dict) -> str:
     """Besked til Claude med HandleMCP, som fylder Bilka ToGo-kurven ud fra indkøbslisten."""
     avoid = [ALLERGENS[k]["label"] for k in profile["allergens"]] + list(profile["other"])
+    traces = ("Varer mærket 'kan indeholde spor af' er i orden. " if state["settings"].get("traces_ok")
+              else "Undgå også varer mærket 'kan indeholde spor af'. ")
     allergy = (f"\nVigtigt: Familien har allergi over for: {', '.join(avoid)}. "
-               "Vælg kun produkter uden disse allergener, og fortæl mig, hvis du er i tvivl om en vare."
-               if avoid else "")
+               "Vælg kun produkter uden disse allergener som ingrediens, og fortæl mig, hvis du er i tvivl "
+               "om en vare. " + traces if avoid else "")
+    prefs = (state["settings"].get("shop_prefs") or "").strip()
+    if prefs:
+        allergy += f"\nØnsker til varevalg: {prefs}."
     return ("Fyld min kurv hos BilkaToGo med denne indkøbsliste. Vælg det billigste produkt, der passer, "
             "og vis mig dine valg og usikre varer, før du lægger noget i kurven. "
             "Du må ikke bestille eller betale – det gør jeg selv." + allergy
@@ -322,7 +341,7 @@ ALLERGENS: dict[str, dict] = {
                    r"|cheddar|\bghee\b|kasein|laktose|halloumi|burrata|gorgonzola|\bbrie\b|emmentaler"
                    r"|\bis\b|bechamel|a38|\bkærne",
         "ignore": r"(?:kokos|havre|soja|ris|mandel|plante|ærte)(?:mælk|fløde|drik)\w*"
-                  r"|(?:jordnødde|mandel|nødde|kakao|peanut)smør|peanutbutter"
+                  r"|(?:jordnødde|mandel|nødde|kakao|peanut|plante)smør|peanutbutter"
                   r"|\b(?:toast|frost|kost|post|kompost|most|æblemost)\b",
         "free": r"vegansk|plantebaseret|mælkefri",
     },
@@ -369,8 +388,25 @@ def free_text_terms(text: str) -> list[str]:
     return [t.strip().lower() for t in re.split(r"[,;\n]+", text or "") if len(t.strip()) >= 3]
 
 
+# Fritekst-allergier, der gemmer sig bag andre ord end det, man selv ville skrive.
+_FREE_TEXT_ALIASES = {
+    "okse": ["okse", "bøf", "kalv", "roastbeef", "entrecote", "culotte", "pastrami", "bresaola"],
+    "græskar": ["græskar", "hokkaido", "butternut"],
+    "svin": ["svin", "gris", "bacon", "skinke", "flæsk", "medister", "pølse", "spegepølse", "leverpostej"],
+    "kylling": ["kylling", "høns", "hane"],
+}
+
+
 def _stem(term: str) -> str:
     return term[:-1] if len(term) > 4 and term.endswith(("e", "r")) else term
+
+
+def search_terms(term: str) -> list[str]:
+    """De ord, en fritekst-allergi skal søges efter i en varetekst."""
+    for key, aliases in _FREE_TEXT_ALIASES.items():
+        if term.startswith(key):
+            return aliases
+    return [_stem(term)]
 
 
 def family_profile(state: dict, member_ids: list[str] | None = None) -> dict:
@@ -398,7 +434,7 @@ def check_text(text: str, profile: dict) -> list[str]:
         hits.append(f"{ALLERGENS[key]['label']} ({', '.join(profile['allergens'][key])})")
     low = (text or "").lower()
     for term, who in profile["other"].items():
-        if _stem(term) in low:
+        if any(word in low for word in search_terms(term)):
             hits.append(f"{term.capitalize()} ({', '.join(who)})")
     return hits
 

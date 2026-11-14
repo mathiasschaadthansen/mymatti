@@ -131,3 +131,23 @@ def test_recalls():
     hits = recalls.relevant(items, s, core.family_profile(s))
     assert [h["link"] for h in hits] == ["https://x/2", "https://x/3"]
     assert hits[0]["allergens"] == ["Æg"] and hits[1]["items"] == ["Byggryn"]
+
+
+def test_free_text_aliases_budget_and_prompt():
+    s = _state()
+    s["family"][0]["other_allergies"] = "oksekød, græskar"
+    profile = core.family_profile(s)
+    for text in ["Hakkebøf", "Oksebouillon", "Kalvefond", "Hokkaido", "Græskarkerner"]:
+        assert core.check_text(text, profile), text
+    for text in ["Kyllingebryst", "Squash", "Plantesmør", "Havremælk", "Knækbrød"]:
+        assert not core.check_text(text, profile), text
+
+    core.record_order(s, 850.5, date(2026, 11, 3))
+    core.record_order(s, 400, date(2026, 10, 30))
+    core.record_order(s, 0, date(2026, 11, 4))
+    assert core.month_spent(s, date(2026, 11, 14)) == 850.5
+
+    core.add_shopping(s, "Havregryn", "1 kg")
+    prompt = core.handle_prompt(s, profile)
+    assert "økologisk" in prompt and "spor af' er i orden" in prompt and "oksekød" in prompt
+    assert "ikke bestille eller betale" in prompt

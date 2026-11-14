@@ -166,6 +166,7 @@ ALLERGIER – ABSOLUTTE KRAV:
 Ingen opskrift må indeholde disse allergener – heller ikke skjult i sammensatte varer
 (fx sojasauce indeholder hvede, pesto indeholder nødder og ost, bouillon kan indeholde selleri).
 Brug IKKE lagervarer, der indeholder allergenerne. Er du i tvivl om en vare, så udelad den.
+{opts.get('traces') or ''}
 
 KAN IKKE LIDE (undgå hvis muligt):
 {dislikes}
@@ -177,6 +178,8 @@ Lav {opts['count']} forskellige forslag til {opts['meal'].lower()} til {opts['pe
 - Hver opskrift må højst kræve {opts['max_missing']} varer, som ikke er på lager.
   Salt, peber og vand må antages at være der; alt andet skal stå på lagerlisten eller tælle som manglende.
 - Tilpas mængderne til antal personer, så der ikke laves for meget.
+- Forslagene skal kunne laves i samme uge: tilsammen må de ikke bruge mere af en lagervare, end der er,
+  og de skal være tydeligt forskellige fra hinanden.
 - Særlige ønsker fra familien: {opts.get('wishes') or 'ingen'}.
 
 FORMAT:

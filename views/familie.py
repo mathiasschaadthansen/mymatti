@@ -26,13 +26,21 @@ def render() -> None:
     with st.form("settings"):
         persons = st.number_input("Antal personer I normalt laver mad til", 1, 20,
                                   int(state["settings"]["persons"]))
+        budget = st.number_input("Månedligt madbudget (kr.) – 0 hvis I ikke har et", 0, 100000,
+                                 int(state["settings"].get("budget_month") or 0), step=500)
+        prefs = st.text_input("Ønsker til varevalg ved indkøb", state["settings"].get("shop_prefs", ""),
+                              placeholder="Fx økologisk når det findes, helst danske varer")
+        traces = st.checkbox("Varer mærket “kan indeholde spor af …” er i orden",
+                             bool(state["settings"].get("traces_ok", True)))
         url = st.text_input("Søge-link til Bilka ToGo", state["settings"]["bilka_url"],
                             help="{q} erstattes med varenavnet. Ret kun, hvis Bilka ændrer deres søgeside.")
         if st.form_submit_button("Gem indstillinger"):
             if "{q}" not in url:
                 st.error("Linket skal indeholde {q}.")
             else:
-                state["settings"].update({"persons": int(persons), "bilka_url": url.strip()})
+                state["settings"].update({"persons": int(persons), "bilka_url": url.strip(),
+                                          "budget_month": int(budget), "shop_prefs": prefs.strip(),
+                                          "traces_ok": traces})
                 save_state(state)
                 flash("Indstillinger gemt")
                 st.rerun()

@@ -26,6 +26,14 @@ def render() -> None:
     cols[2].metric("Mangler", len(low))
     cols[3].metric("Indkøb", len(state["shopping"]))
 
+    budget = state["settings"].get("budget_month") or 0
+    if budget:
+        spent = core.month_spent(state)
+        st.progress(min(spent / budget, 1.0),
+                    text=f"Madbudget denne måned: {spent:,.0f} af {budget:,.0f} kr. brugt".replace(",", "."))
+        if spent > budget:
+            st.warning(f"I er {spent - budget:,.0f} kr. over månedens budget.".replace(",", "."))
+
     if not state["family"]:
         st.warning("Start med at indtaste familiens allergier under **Familie & allergier**, "
                    "så opskrifterne tager højde for dem.")

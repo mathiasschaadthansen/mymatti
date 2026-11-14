@@ -89,7 +89,10 @@ def render() -> None:
     st.link_button("Åbn Bilka ToGo", "https://www.bilkatogo.dk/", type="primary")
 
     st.markdown("**3. Når bestillingen er gennemført**, lægges de afkrydsede varer på lageret:")
+    amount = st.number_input("Hvad kom bestillingen på? (kr., valgfrit – bruges til månedsbudgettet)",
+                             0.0, 100000.0, 0.0, step=50.0)
     if st.button(f"Bestilling gennemført – læg {len(in_cart)} vare(r) på lager", disabled=not in_cart):
+        core.record_order(state, amount)
         count = core.receive_purchased(state)
         core.sync_staples(state)
         save_state(state)
