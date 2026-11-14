@@ -37,6 +37,8 @@ Tests: `pip install pytest && python -m pytest`
 - [ ] Læg `GEMINI_API_KEY` og `APP_PASSWORD` ind samme sted, og fyld Gemini-kontoen op.
 - [ ] Slet testmedlemmet "Test" under Familie & allergier, hvis det stadig findes.
 - [ ] Tjek at forsiden nederst viser "Data gemmes i: Supabase".
+- [ ] Tilføj Mymatti som brugerdefineret connector i Claude (Indstillinger → Connectors).
+      Den hemmelige adresse står i Claude Code-samtalen, ikke her i repoet.
 - [ ] Flet grenen ind, når secrets er på plads (ellers kører appen uden adgangskode og varig lagring).
 
 ## Claude-forbindelsen (MCP)
