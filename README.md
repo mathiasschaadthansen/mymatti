@@ -29,6 +29,15 @@ streamlit run App.py
 
 Tests: `pip install pytest && python -m pytest`
 
+## Mangler før appen er klar (gøres ved computeren)
+
+- [ ] Læg `SUPABASE_URL` (`https://dmwgqmdvvuognflntjdb.supabase.co`) og `SUPABASE_KEY` ind i appens secrets.
+      Nøglen er service_role/secret key under Project Settings → API Keys i Supabase-projektet Naevnt.
+      Tabellen `mymatti_state` er oprettet.
+- [ ] Læg `GEMINI_API_KEY` og `APP_PASSWORD` ind samme sted, og fyld Gemini-kontoen op.
+- [ ] Tjek at forsiden nederst viser "Data gemmes i: Supabase".
+- [ ] Flet grenen ind, når secrets er på plads (ellers kører appen uden adgangskode og varig lagring).
+
 ## Opsætning (secrets)
 
 | Navn | Formål |
