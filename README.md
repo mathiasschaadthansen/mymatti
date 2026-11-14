@@ -46,7 +46,7 @@ Den nye app er en statisk side uden byggetrin. Al logik ligger i Supabase-funkti
 - `web/` – siden (`index.html`, `app.js`, `app.css`). Farvetema og husstandskode gemmes på den enkelte telefon.
 - `api.ts` – handlingerne bag siden · `ai.ts` – Gemini · `recalls.ts` – tilbagekald · `logic.ts` – lager, indkøb og allergitjek.
 - En husstand er én række i `mymatti_state`, hvis id er SHA-256 af husstandskoden. Koden selv gemmes ikke nogen steder.
-- Lokalt: `node scripts/dev-server.mjs` (data i hukommelsen) → http://localhost:8788.
+- Lokalt: `node scripts/dev-server.mjs` (data i hukommelsen) → http://localhost:8788. Med `DEMO=1` oprettes en eksempel-husstand.
 - Tests: `node tests/api_test.mjs` og `node tests/mcp_test.mjs`.
 
 Streamlit-udgaven (`App.py`, `views/`, `mymatti/`) ligger her stadig, men er afløst af Netlify-udgaven.

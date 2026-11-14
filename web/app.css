@@ -20,7 +20,7 @@
 html, body { margin: 0; background: var(--bg); color: var(--fg); }
 body { font-size: 16px; line-height: 1.45; -webkit-text-size-adjust: 100%; }
 #app { max-width: 720px; margin: 0 auto; padding: calc(16px + env(safe-area-inset-top, 0px)) 16px calc(96px + env(safe-area-inset-bottom, 0px)); display: flex; flex-direction: column; gap: 16px; }
-h1 { font-size: 1.7rem; margin: 4px 0 0; letter-spacing: -0.02em; }
+h1 { font-size: 1.7rem; margin: 4px 0 0; letter-spacing: -0.02em; text-wrap: balance; }
 h2 { font-size: 1.15rem; margin: 8px 0 0; }
 h3 { font-size: 1rem; margin: 0; }
 p { margin: 0; }
@@ -67,6 +67,12 @@ input[type="checkbox"] { width: 22px; height: 22px; min-height: 0; padding: 0; a
 
 .item-head { display: flex; justify-content: space-between; gap: 10px; align-items: baseline; }
 .item-head b { overflow-wrap: anywhere; }
+.item-foot { display: flex; justify-content: space-between; align-items: center; gap: 8px 12px; flex-wrap: wrap; }
+.item-foot > p, .item-foot > label { flex: 1 1 150px; min-width: 0; }
+.actions { display: flex; gap: 6px; flex: none; margin-left: auto; }
+.card.tight { padding: 10px 14px; gap: 2px; }
+.card.done { opacity: 0.6; }
+.card.done b { text-decoration: line-through; }
 .qty { font-variant-numeric: tabular-nums; white-space: nowrap; font-weight: 600; }
 .dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 5px; background: #3FA06A; }
 .dot.soon { background: var(--warn-line); } .dot.late { background: var(--alert-line); }
@@ -95,3 +101,18 @@ dialog#sheet::backdrop { background: rgba(0, 0, 0, 0.45); }
 fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
 legend { padding: 0; margin-bottom: 4px; }
 dialog#sheet { overflow-y: auto; overscroll-behavior: contain; }
+
+/* Bred skærm: menuen flytter op som en fane-række, og indholdet får mere luft */
+@media (min-width: 760px) {
+  #app { padding-top: 88px; padding-bottom: 48px; gap: 18px; }
+  #tabs { top: 0; bottom: auto; border-top: 0; border-bottom: 1px solid var(--line); padding: 8px 16px; gap: 6px; }
+  #tabs button { flex-direction: row; gap: 8px; font-size: 0.95rem; min-height: 46px; padding: 0 14px; flex: 0 1 auto; max-width: none; }
+  #tabs button span { font-size: 1.15rem; }
+  #toast { bottom: 24px; }
+  .stats { gap: 12px; }
+}
+.row.even > * { flex: 1 1 0; padding: 0 8px; white-space: nowrap; }
+details > summary { list-style: none; justify-content: space-between; gap: 8px; }
+details > summary::-webkit-details-marker { display: none; }
+details > summary::after { content: "▾"; color: var(--muted); flex: none; }
+details[open] > summary::after { content: "▴"; }

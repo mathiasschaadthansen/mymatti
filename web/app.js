@@ -74,9 +74,10 @@ function logout() {
 function freshness(item) {
   const d = item.days_left;
   if (d === null || d === undefined) return "";
-  if (d < 0) return `<span class="dot late"></span>udløbet for ${-d} dag(e) siden`;
+  const days = (n) => `${n} ${n === 1 ? "dag" : "dage"}`;
+  if (d < 0) return `<span class="dot late"></span>udløbet for ${days(-d)} siden`;
   if (d === 0) return `<span class="dot soon"></span>udløber i dag`;
-  return `<span class="dot${d <= 3 ? " soon" : ""}"></span>${d} dag(e) tilbage`;
+  return `<span class="dot${d <= 3 ? " soon" : ""}"></span>${days(d)} tilbage`;
 }
 
 function viewLogin() {
@@ -120,8 +121,8 @@ function viewOverblik(v) {
       <p class="alert-text">${[r.items.length ? "Matcher jeres varer: " + esc(r.items.join(", ")) : "", r.allergens.length ? "Udeklareret allergen: " + esc(r.allergens.join(", ")) : ""].filter(Boolean).join(" · ")}</p></div>`).join("")
       + `<p class="muted">Matchet er lavet på varenavn. Tjek mærke, batch og dato i opslaget.</p>`;
   }
-  if (soon.length) html += `<h2>Brug først</h2><ul class="plain">${soon.map((i) => `<li class="card"><div class="item-head"><b>${esc(i.name)}</b><span class="qty">${fmt(i.qty, i.unit)}</span></div><p class="muted">${esc(i.location)} · ${freshness(i)}</p></li>`).join("")}</ul>`;
-  if (low.length) html += `<h2>Faste varer, der er ved at slippe op</h2><ul class="plain">${low.map((i) => `<li class="card"><div class="item-head"><b>${esc(i.name)}</b><span class="qty">${fmt(i.qty, i.unit)} af ${fmt(i.min_qty, i.unit)}</span></div></li>`).join("")}</ul><p class="muted">De er lagt på indkøbslisten automatisk.</p>`;
+  if (soon.length) html += `<h2>Brug først</h2><ul class="plain">${soon.map((i) => `<li class="card tight"><div class="item-head"><b>${esc(i.name)}</b><span class="qty">${fmt(i.qty, i.unit)}</span></div><p class="muted">${esc(i.location)} · ${freshness(i)}</p></li>`).join("")}</ul>`;
+  if (low.length) html += `<h2>Faste varer, der er ved at slippe op</h2><ul class="plain">${low.map((i) => `<li class="card tight"><div class="item-head"><b>${esc(i.name)}</b><span class="qty">${fmt(i.qty, i.unit)} af ${fmt(i.min_qty, i.unit)}</span></div></li>`).join("")}</ul><p class="muted">De er lagt på indkøbslisten automatisk.</p>`;
   if (v.profile.allergens.length || v.profile.other.length) {
     html += `<h2>Familiens allergier</h2><ul class="plain">${[...v.profile.allergens, ...v.profile.other].map((a) => `<li>${esc(a.label)} – ${esc(a.who.join(", "))}</li>`).join("")}</ul><p class="muted">${DISCLAIMER}</p>`;
   }
@@ -168,12 +169,12 @@ function viewLager(v) {
   if (!shown.length) html += `<p class="muted">${v.inventory.length ? `Ingen varer i ${esc(S.where.toLowerCase())}.` : "Ingen varer endnu."}</p>`;
   html += shown.map((i) => {
     const step = STEP[i.unit] ?? 1;
-    const details = [esc(i.location), freshness(i), i.min_qty ? `📌 minimum ${fmt(i.min_qty, i.unit)}` : ""].filter(Boolean).join(" · ");
+    const details = [esc(i.location), freshness(i), i.min_qty ? `📌 min. ${fmt(i.min_qty, i.unit)}` : ""].filter(Boolean).join(" · ");
     return `<div class="card${i.low ? " alert" : ""}"><div class="item-head"><b>${esc(i.name)}${i.warnings.length ? " ⚠️" : ""}</b><span class="qty">${fmt(i.qty, i.unit)}</span></div>
-      <p class="muted">${details}</p>
-      <div class="row"><button class="square" data-act="adjust" data-id="${i.id}" data-delta="${-step}" aria-label="Brugt ${fmt(step, i.unit)} ${esc(i.name)}">−</button>
+      <div class="item-foot"><p class="muted">${details}</p>
+      <div class="actions"><button class="square" data-act="adjust" data-id="${i.id}" data-delta="${-step}" aria-label="Brugt ${fmt(step, i.unit)} ${esc(i.name)}">−</button>
       <button class="square" data-act="adjust" data-id="${i.id}" data-delta="${step}" aria-label="Læg ${fmt(step, i.unit)} ${esc(i.name)} til">+</button>
-      <button data-act="edit-item" data-id="${i.id}">Ret</button></div></div>`;
+      <button data-act="edit-item" data-id="${i.id}">Ret</button></div></div></div>`;
   }).join("");
   return html;
 }
@@ -193,7 +194,7 @@ function recipeCard(r, v, saved) {
       ${used.map((i) => { const item = v.inventory.find((x) => x.id === i.inventory_id); return `<label>${esc(item.name)} (har ${fmt(item.qty, item.unit)})<input name="${item.id}" type="number" inputmode="decimal" min="0" step="any" value="${i.use_qty ?? 0}"></label>`; }).join("")}
       <div class="row"><button class="primary grow">Træk fra lageret</button><button type="button" data-act="cook-cancel">Fortryd</button></div></form>`;
   } else {
-    html += `<div class="row"><button data-act="recipe-shop" data-id="${r.id}"${missing.length ? "" : " disabled"}>🛒 Mangler → indkøb</button>
+    html += `<div class="row even"><button data-act="recipe-shop" data-id="${r.id}"${missing.length ? "" : " disabled"} aria-label="Læg manglende varer på indkøbslisten">🛒 Mangler</button>
       <button data-act="cook" data-id="${r.id}">✅ Lavet</button>
       ${saved ? `<button class="danger" data-act="recipe-delete" data-id="${r.id}">Fjern</button>` : `<button data-act="recipe-save" data-id="${r.id}"${v.saved_recipes.some((x) => x.title === r.title) ? " disabled" : ""}>⭐ Gem</button>`}</div>`;
   }
@@ -244,9 +245,9 @@ function viewIndkob(v) {
   for (const cat of v.categories) {
     const entries = v.shopping.filter((e) => e.category === cat);
     if (!entries.length) continue;
-    html += `<h2>${esc(cat)}</h2>` + entries.map((e) => `<div class="card"><label class="check"><input type="checkbox" data-change="cart" data-id="${e.id}"${e.in_cart ? " checked" : ""}><span><b>${esc(e.name)}</b>${e.amount ? ` · ${esc(e.amount)}` : ""}</span></label>
-      ${e.warnings.length ? `<p class="alert-text">⚠️ ${esc(e.warnings.join("; "))}</p>` : e.reason ? `<p class="muted">${esc(e.reason)}</p>` : ""}
-      <div class="row"><a class="btn grow" href="${esc(e.bilka_url)}" target="_blank" rel="noopener">Find hos Bilka</a><button class="danger" data-act="shop-remove" data-id="${e.id}" aria-label="Fjern ${esc(e.name)}">Fjern</button></div></div>`).join("");
+    html += `<h2>${esc(cat)}</h2>` + entries.map((e) => `<div class="card${e.in_cart ? " done" : ""}"><div class="item-foot"><label class="check"><input type="checkbox" data-change="cart" data-id="${e.id}"${e.in_cart ? " checked" : ""}><span><b>${esc(e.name)}</b>${e.amount ? ` · ${esc(e.amount)}` : ""}</span></label>
+      <div class="actions"><a class="btn" href="${esc(e.bilka_url)}" target="_blank" rel="noopener" aria-label="Find ${esc(e.name)} hos Bilka">Bilka</a><button class="square danger" data-act="shop-remove" data-id="${e.id}" aria-label="Fjern ${esc(e.name)}">✕</button></div></div>
+      ${e.warnings.length ? `<p class="alert-text">⚠️ ${esc(e.warnings.join("; "))}</p>` : e.reason ? `<p class="muted">${esc(e.reason)}</p>` : ""}</div>`).join("");
   }
   const inCart = v.shopping.filter((e) => e.in_cart).length;
   html += `<p class="muted">${inCart} af ${v.shopping.length} lagt i kurven. Sæt flueben, når en vare er i kurven.</p>
