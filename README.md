@@ -31,27 +31,26 @@ Tests: `pip install pytest && python -m pytest`
 
 ## Mangler før appen er klar (gøres ved computeren)
 
-- [ ] Læg `SUPABASE_URL` (`https://dmwgqmdvvuognflntjdb.supabase.co`) og `SUPABASE_KEY` ind i appens secrets.
-      Nøglen er service_role/secret key under Project Settings → API Keys i Supabase-projektet Naevnt.
-      Tabellen `mymatti_state` er oprettet.
-- [ ] Læg `GEMINI_API_KEY` og `APP_PASSWORD` ind samme sted, og fyld Gemini-kontoen op.
-- [ ] Slet testmedlemmet "Test" under Familie & allergier, hvis det stadig findes.
-- [ ] Tjek at forsiden nederst viser "Data gemmes i: Supabase".
-- [ ] Tilføj Mymatti som brugerdefineret connector i Claude (Indstillinger → Connectors).
-      Den hemmelige adresse står i Claude Code-samtalen, ikke her i repoet.
-- [ ] Flet grenen ind, når secrets er på plads (ellers kører appen uden adgangskode og varig lagring).
+- [ ] **Netlify:** Opret et site fra dette repo. Byggekommando: ingen. Publish directory: `web` (står i `netlify.toml`).
+- [ ] **Husstandskoden:** Åbn siden, og log ind med koden fra Claude Code-samtalen (den sidste del af connector-adressen),
+      eller opret en ny husstand. Opret familien og allergierne under Familie.
+- [ ] **Claude:** Tilføj connector-adressen som brugerdefineret connector (Indstillinger → Connectors).
+      Adressen står under Familie → Husstandskode → Tilslut Claude.
+- [ ] **AI i appen (valgfrit):** Læg en gratis Gemini-nøgle ind som secret `GEMINI_API_KEY` på Supabase-funktionen
+      `mymatti-mcp` (Edge Functions → Secrets). Uden den virker alt andet, og Claude kan lave opskrifterne.
 
-## Claude-forbindelsen (MCP)
+## Netlify-udgaven (web/)
 
-`supabase/functions/mymatti-mcp/` er en Supabase Edge Function, der giver Claude otte værktøjer til samme
-database som web-appen: hent husstanden, allergitjek, ret lager, ret indkøbsliste, afslut bestilling og gem opskrift.
+Den nye app er en statisk side uden byggetrin. Al logik ligger i Supabase-funktionen `supabase/functions/mymatti-mcp/`:
 
-- Adresse: `https://<projekt>.supabase.co/functions/v1/mymatti-mcp/<adgangsnøgle>` – tilføjes i Claude som
-  brugerdefineret connector. Adressen er hemmelig: alle med den kan læse og rette husstandens data.
-- Kun nøglens SHA-256 ligger i databasen (rækken `mcp_access` i `mymatti_state`). Skift nøgle ved at gemme et nyt fingeraftryk.
-- Allergireglerne i `allergens.ts` genereres fra Python-reglerne: `python scripts/gen_allergens.py`.
-  `node tests/mcp_test.mjs` tjekker, at de to giver samme svar, og at værktøjerne virker.
-- Kurven hos Bilka ToGo fyldes af [HandleMCP](https://handlemcp.dk/bilkatogo-api/) på computeren; Mymatti leverer listen.
+- `web/` – siden (`index.html`, `app.js`, `app.css`). Farvetema og husstandskode gemmes på den enkelte telefon.
+- `api.ts` – handlingerne bag siden · `ai.ts` – Gemini · `recalls.ts` – tilbagekald · `logic.ts` – lager, indkøb og allergitjek.
+- En husstand er én række i `mymatti_state`, hvis id er SHA-256 af husstandskoden. Koden selv gemmes ikke nogen steder.
+- Lokalt: `node scripts/dev-server.mjs` (data i hukommelsen) → http://localhost:8788.
+- Tests: `node tests/api_test.mjs` og `node tests/mcp_test.mjs`.
+
+Streamlit-udgaven (`App.py`, `views/`, `mymatti/`) ligger her stadig, men er afløst af Netlify-udgaven.
+`mymatti/core.py` er fortsat kilden til allergireglerne (`python scripts/gen_allergens.py`).
 
 ## Opsætning (secrets)
 
