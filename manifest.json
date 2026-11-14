@@ -1,7 +1,7 @@
 {
   "name": "Mymatti",
   "short_name": "Mymatti",
-  "description": "Din personlige guide til E-numre og krydsallergi.",
+  "description": "Familiens madlager, opskrifter og indkøb – med styr på allergierne.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#FBFBFD",
