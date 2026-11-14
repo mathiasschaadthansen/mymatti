@@ -35,8 +35,21 @@ Tests: `pip install pytest && python -m pytest`
       Nøglen er service_role/secret key under Project Settings → API Keys i Supabase-projektet Naevnt.
       Tabellen `mymatti_state` er oprettet.
 - [ ] Læg `GEMINI_API_KEY` og `APP_PASSWORD` ind samme sted, og fyld Gemini-kontoen op.
+- [ ] Slet testmedlemmet "Test" under Familie & allergier, hvis det stadig findes.
 - [ ] Tjek at forsiden nederst viser "Data gemmes i: Supabase".
 - [ ] Flet grenen ind, når secrets er på plads (ellers kører appen uden adgangskode og varig lagring).
+
+## Claude-forbindelsen (MCP)
+
+`supabase/functions/mymatti-mcp/` er en Supabase Edge Function, der giver Claude otte værktøjer til samme
+database som web-appen: hent husstanden, allergitjek, ret lager, ret indkøbsliste, afslut bestilling og gem opskrift.
+
+- Adresse: `https://<projekt>.supabase.co/functions/v1/mymatti-mcp/<adgangsnøgle>` – tilføjes i Claude som
+  brugerdefineret connector. Adressen er hemmelig: alle med den kan læse og rette husstandens data.
+- Kun nøglens SHA-256 ligger i databasen (rækken `mcp_access` i `mymatti_state`). Skift nøgle ved at gemme et nyt fingeraftryk.
+- Allergireglerne i `allergens.ts` genereres fra Python-reglerne: `python scripts/gen_allergens.py`.
+  `node tests/mcp_test.mjs` tjekker, at de to giver samme svar, og at værktøjerne virker.
+- Kurven hos Bilka ToGo fyldes af [HandleMCP](https://handlemcp.dk/bilkatogo-api/) på computeren; Mymatti leverer listen.
 
 ## Opsætning (secrets)
 
