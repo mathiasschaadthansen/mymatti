@@ -1,4 +1,8 @@
-"""Kernelogik uden Streamlit: enheder, beholdning, indkøb og allergitjek."""
+"""Kilden til allergireglerne (og den oprindelige lager- og indkøbslogik).
+
+Serveren i supabase/functions/mymatti-mcp/ bruger samme regler: kør scripts/gen_allergens.py efter ændringer
+i ALLERGENS eller _FREE_TEXT_ALIASES, og tests/mcp_test.mjs tjekker, at de to giver samme svar.
+"""
 from __future__ import annotations
 
 import re

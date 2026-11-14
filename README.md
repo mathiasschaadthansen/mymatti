@@ -1,71 +1,62 @@
 # Mymatti
 
-Web-app til familiens madlager: skriv hvad I har, få opskrifter ud fra det, og få gjort
-indkøbet til Bilka ToGo klar – med hensyn til familiens allergier hele vejen.
+Web-app til familiens madlager: skriv hvad I har, få opskrifter ud fra det, og få gjort indkøbet til
+Bilka ToGo klar – med hensyn til familiens allergier hele vejen. Kører på https://mymatti.netlify.app/.
 
 ## Det kan appen
 
-- **Beholdning** – skriv varerne i fri tekst, eller tag et billede af køleskabet eller kassebonen.
-  AI'en foreslår mængde, placering og holdbarhed, som I retter til, før det lægges på lager.
-- **Opskrifter** – forslag ud fra lageret, hvor varer der udløber snart bruges først.
-  Vælg hvem der spiser med, antal personer, tid og hvor mange ekstra varer der må købes.
-  "Vi har lavet den" trækker forbruget fra lageret.
-- **Indkøb** – faste varer under minimum og manglende ingredienser samles automatisk på en liste
-  med søge-link til Bilka ToGo for hver vare. I gennemgår og bestiller selv.
-  Listen kan også gives til Claude med [HandleMCP](https://handlemcp.dk/bilkatogo-api/), som fylder kurven.
+- **Lager** – skriv varerne frit, indsæt en ordrebekræftelse, eller tag et foto af køleskab eller bon.
+  Varerne vises som kort med plus/minus. Faste varer med et minimum kommer selv på indkøbslisten.
+- **Opskrifter** – forslag ud fra lageret, hvor varer der udløber snart bruges først (kræver AI-nøgle,
+  ellers spørger man Claude). "Lavet" trækker forbruget fra lageret.
+- **Indkøb** – samlet liste med søge-link til Bilka ToGo pr. vare og en færdig besked til Claude med
+  [HandleMCP](https://handlemcp.dk/bilkatogo-api/), som kan fylde kurven. Man bestiller og betaler selv.
 - **Allergier** – de 14 EU-allergener plus fritekst pr. familiemedlem. Opskrifter tjekkes to gange:
-  AI'en får allergierne som krav, og bagefter kører et uafhængigt ordbaseret tjek, der frasorterer forslag.
-- **Tilbagekaldte produkter** – Fødevarestyrelsens tilbagekald holdes op mod jeres varer og allergier.
+  AI'en får allergierne som krav, og bagefter frasorterer et uafhængigt ordbaseret tjek forslag, der rammer.
+- **Tilbagekaldte produkter** – Fødevarestyrelsens tilbagekald holdes op mod lageret og allergierne.
+- **Claude** – samme data kan bruges fra Claude som brugerdefineret connector (MCP).
 
 Allergitjekket er en hjælp, ikke en garanti. Læs altid varedeklarationen.
 
-## Kør lokalt
-
-```bash
-pip install -r requirements.txt
-cp .streamlit/secrets.toml.example .streamlit/secrets.toml   # udfyld nøgler
-streamlit run App.py
-```
-
-Tests: `pip install pytest && python -m pytest`
-
-## Mangler før appen er klar (gøres ved computeren)
-
-- [ ] **Netlify:** Opret et site fra dette repo. Byggekommando: ingen. Publish directory: `web` (står i `netlify.toml`).
-- [ ] **Husstandskoden:** Åbn siden, og log ind med koden fra Claude Code-samtalen (den sidste del af connector-adressen),
-      eller opret en ny husstand. Opret familien og allergierne under Familie.
-- [ ] **Claude:** Tilføj connector-adressen som brugerdefineret connector (Indstillinger → Connectors).
-      Adressen står under Familie → Husstandskode → Tilslut Claude.
-- [ ] **AI i appen (valgfrit):** Læg en gratis Gemini-nøgle ind som secret `GEMINI_API_KEY` på Supabase-funktionen
-      `mymatti-mcp` (Edge Functions → Secrets). Uden den virker alt andet, og Claude kan lave opskrifterne.
-
-## Netlify-udgaven (web/)
-
-Den nye app er en statisk side uden byggetrin. Al logik ligger i Supabase-funktionen `supabase/functions/mymatti-mcp/`:
-
-- `web/` – siden (`index.html`, `app.js`, `app.css`). Farvetema og husstandskode gemmes på den enkelte telefon.
-- `api.ts` – handlingerne bag siden · `ai.ts` – Gemini · `recalls.ts` – tilbagekald · `logic.ts` – lager, indkøb og allergitjek.
-- En husstand er én række i `mymatti_state`, hvis id er SHA-256 af husstandskoden. Koden selv gemmes ikke nogen steder.
-- Lokalt: `node scripts/dev-server.mjs` (data i hukommelsen) → http://localhost:8788. Med `DEMO=1` oprettes en eksempel-husstand.
-- Tests: `node tests/api_test.mjs` og `node tests/mcp_test.mjs`.
-
-Streamlit-udgaven (`App.py`, `views/`, `mymatti/`) ligger her stadig, men er afløst af Netlify-udgaven.
-`mymatti/core.py` er fortsat kilden til allergireglerne (`python scripts/gen_allergens.py`).
-
-## Opsætning (secrets)
-
-| Navn | Formål |
-| --- | --- |
-| `GEMINI_API_KEY` | AI til opskrifter og fortolkning af varer/billeder. Uden den virker lager og indkøb stadig. |
-| `APP_PASSWORD` | Adgangskode til appen (anbefales). |
-| `SUPABASE_URL`, `SUPABASE_KEY` | Varig lagring. Kør `supabase/schema.sql` i projektet og brug service_role-nøglen. |
-
-Uden Supabase gemmes data i `data/state.json`. På Streamlit Cloud forsvinder den fil ved genstart,
-så sæt Supabase op, når appen skal bruges for alvor.
-
 ## Opbygning
 
-- `App.py` – navigation og adgangskode
-- `views/` – de fem sider
-- `mymatti/core.py` – lager, enheder, indkøbsliste og allergitjek (uden Streamlit, dækket af tests)
-- `mymatti/ai.py` – kald til Gemini · `mymatti/recalls.py` – tilbagekald · `mymatti/storage.py` – lagring
+| Del | Hvor | Hvad |
+| --- | --- | --- |
+| Hjemmeside | `web/` på Netlify | Statisk side uden byggetrin (`index.html`, `app.js`, `app.css`). |
+| Server | `supabase/functions/mymatti-mcp/` | Supabase Edge Function med API til siden og MCP-server til Claude. |
+| Data | Tabellen `mymatti_state` | Én række pr. husstand; id er SHA-256 af husstandskoden. |
+| Allergiregler | `mymatti/core.py` | Kilden. `python scripts/gen_allergens.py` genererer `allergens.ts`. |
+
+Serverens filer: `index.ts` (indgange og login), `api.ts` (handlinger bag siden), `mcp.ts` (Claude-værktøjer),
+`logic.ts` (lager, indkøb, allergitjek), `ai.ts` (Gemini), `recalls.ts` (tilbagekald).
+
+### Husstandskode
+
+Hver husstand har en tilfældig kode, som indtastes én gang pr. telefon og står under Familie i appen.
+Koden selv gemmes ingen steder – kun dens SHA-256. Den kan ikke genskabes, hvis den bliver væk.
+
+### Claude-connectoren
+
+Adressen er `https://<projekt>.supabase.co/functions/v1/mymatti-mcp/<husstandskode>` og tilføjes på
+claude.ai under Tilpas → Connectors → Tilføj brugerdefineret forbindelse med "Intet login".
+Adressen er hemmelig: alle med den kan læse og rette husstandens data.
+
+## Udvikling
+
+```bash
+DEMO=1 node scripts/dev-server.mjs   # siden og API'et lokalt på http://localhost:8788 (data i hukommelsen)
+node tests/api_test.mjs              # API-handlingerne
+node tests/mcp_test.mjs              # Claude-værktøjerne, og at allergireglerne stemmer med Python
+pip install pytest && python -m pytest   # allergireglerne i mymatti/core.py
+```
+
+Med `DEMO=1` oprettes en eksempel-husstand, hvis kode er `demo` gentaget 10 gange.
+
+## Drift
+
+- **Netlify:** udgiver mappen `web` (se `netlify.toml`). Ingen byggekommando eller miljøvariabler.
+- **Supabase:** funktionen `mymatti-mcp` udgives med `verify_jwt = false` (den har sit eget login).
+  Tabellen oprettes med `supabase/schema.sql`.
+- **AI (valgfrit):** læg en Gemini-nøgle som secret `GEMINI_API_KEY` på funktionen. Standardmodellen er
+  `gemini-flash-lite-latest` og kan ændres med `GEMINI_MODEL`. Uden nøgle virker alt undtagen opskrifter
+  og foto i appen.

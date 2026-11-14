@@ -2,8 +2,7 @@ from datetime import date, timedelta
 
 import pytest
 
-from mymatti import core, recalls
-from mymatti.ai import build_recipe_prompt, finalize_recipe
+from mymatti import core
 
 
 @pytest.mark.parametrize("text,expected", [
@@ -91,46 +90,6 @@ def test_expiring_and_bilka_url():
     core.add_item(s, {"name": "Pasta"})
     assert [i["name"] for i in core.expiring(s)] == ["Kylling"]
     assert core.bilka_url(s, "hakket oksekød") == "https://www.bilkatogo.dk/s/?query=hakket%20oksek%C3%B8d"
-
-
-def test_recipe_prompt_and_finalize():
-    s = _state()
-    core.add_item(s, {"name": "Ris", "qty": 500, "unit": "g"})
-    profile = core.family_profile(s)
-    prompt = build_recipe_prompt(s["inventory"], profile, {
-        "count": 2, "meal": "Aftensmad", "persons": 4, "max_time": 30, "max_missing": 2})
-    assert "Mælk (inkl. laktose) (gælder: Emma)" in prompt and "kiwi" in prompt and "svampe" in prompt
-    rid = s["inventory"][0]["id"]
-    recipe = finalize_recipe({"title": "Risret", "allergens": [], "ingredients": [
-        {"name": "Ris", "amount": "9 kg", "inventory_id": rid, "use_qty": 9000},
-        {"name": "Fløde", "amount": "1 dl", "inventory_id": "findes-ikke", "use_qty": 1},
-    ]}, s["inventory"], profile)
-    assert recipe["ingredients"][0]["use_qty"] == 500
-    assert recipe["ingredients"][1]["inventory_id"] is None
-    assert recipe["allergy_hits"]
-
-
-FEED = """<?xml version="1.0" encoding="utf-8"?><rss version="2.0"><channel>
-<item><title>Tilbagekald: Salmonella i Chicken gyros</title><link>https://x/1</link>
-<description>Lidl tilbagekalder Chicken gyros.</description><pubDate>Fri, 13 Nov 2026 10:41:23 GMT</pubDate></item>
-<item><title>Tilbagekald - udeklareret æg i ispinde</title><link>https://x/2</link>
-<description>Der er påvist æg i produktet, til trods for at dette ikke fremgår.</description>
-<pubDate>Fri, 06 Nov 2026 12:24:38 GMT</pubDate></item>
-<item><title>Tilbagekald: Spind fra møl i knækkede byggryn</title><link>https://x/3</link>
-<description>Megafood tilbagekalder Kilic knækkede byggryn.</description><pubDate>bad</pubDate></item>
-</channel></rss>"""
-
-
-def test_recalls():
-    items = recalls.parse_feed(FEED)
-    assert len(items) == 3 and items[0]["published"].year == 2026 and items[2]["published"] is None
-    s = _state()
-    s["family"][1]["allergies"] = ["aeg"]
-    core.add_item(s, {"name": "Byggryn"})
-    core.add_item(s, {"name": "Mælk"})
-    hits = recalls.relevant(items, s, core.family_profile(s))
-    assert [h["link"] for h in hits] == ["https://x/2", "https://x/3"]
-    assert hits[0]["allergens"] == ["Æg"] and hits[1]["items"] == ["Byggryn"]
 
 
 def test_free_text_aliases_budget_and_prompt():
