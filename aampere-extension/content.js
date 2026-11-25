@@ -7,8 +7,6 @@
 
   const state = {
     bidEur: 0,
-    mode: "margin", // "margin" | "vat"
-    modeManual: false,
     rate: FALLBACK_RATE,
     rateDate: null,
     rateManual: false,
@@ -41,9 +39,6 @@
   input { width: 110px; padding: 4px 6px; border: 1px solid #d1d5db; border-radius: 6px;
           font-size: 13px; text-align: right; font-variant-numeric: tabular-nums; color: #111827; background: #fff; }
   input:focus { outline: 2px solid #3dbf95; outline-offset: -1px; }
-  .seg { display: flex; border: 1px solid #d1d5db; border-radius: 6px; overflow: hidden; }
-  .seg button { border: 0; background: #fff; padding: 4px 9px; font-size: 12px; cursor: pointer; color: #374151; }
-  .seg button.on { background: #111827; color: #fff; }
   hr { border: 0; border-top: 1px solid #e5e7eb; margin: 9px 0; }
   .out { font-variant-numeric: tabular-nums; white-space: nowrap; }
   .total { font-weight: 700; font-size: 15px; }
@@ -56,17 +51,15 @@
   <header><span>Bud → DKK</span><span class="sum" id="sum"></span></header>
   <div class="body">
     <div class="row"><label>Bud (€)</label><input id="bidEur" inputmode="decimal" placeholder="fra siden"></div>
-    <div class="row"><label>Moms</label>
-      <div class="seg"><button data-mode="margin">Margin</button><button data-mode="vat">Fuld moms</button></div></div>
     <div class="row"><label>Kurs EUR/DKK</label><input id="rate" inputmode="decimal"></div>
     <div class="row"><label>Levering (€ netto)</label><input id="deliveryEur" inputmode="decimal"></div>
-    <div class="row"><label>Øvrige omk. (kr)</label><input id="otherDkk" inputmode="decimal" placeholder="0"></div>
+    <div class="row"><label>Øvrige omk. (kr ekskl. moms)</label><input id="otherDkk" inputmode="decimal" placeholder="0"></div>
     <div class="hint" id="rateHint"></div>
     <hr>
     <div id="result"></div>
     <hr>
-    <div class="row"><label id="saleLabel">Salgspris (kr)</label><input id="saleDkk" inputmode="decimal" placeholder="valgfri"></div>
-    <div class="row"><label>Ønsket avance (kr)</label><input id="profitDkk" inputmode="decimal" placeholder="0"></div>
+    <div class="row"><label>Salgspris inkl. moms (kr)</label><input id="saleDkk" inputmode="decimal" placeholder="valgfri"></div>
+    <div class="row"><label>Ønsket avance (kr ekskl. moms)</label><input id="profitDkk" inputmode="decimal" placeholder="0"></div>
     <div id="saleResult"></div>
   </div>
 </div>`;
@@ -80,10 +73,6 @@
 
   function render() {
     box.classList.toggle("collapsed", state.collapsed);
-    root.querySelectorAll(".seg button").forEach((b) =>
-      b.classList.toggle("on", b.dataset.mode === state.mode));
-    const vat = state.mode === "vat";
-    $("saleLabel").textContent = vat ? "Salgspris inkl. moms (kr)" : "Salgspris (kr)";
     $("rateHint").textContent = state.rateManual
       ? "Kurs sat manuelt."
       : state.rateDate ? `ECB-kurs ${state.rateDate}.` : "Standardkurs – kunne ikke hente dagens.";
@@ -93,28 +82,23 @@
     if (!state.bidEur) {
       html = `<div class="hint">Skriv et bud i feltet på siden – eller her.</div>`;
       $("sum").textContent = "";
-    } else if (vat) {
-      html += line("Bil netto (÷ 19 % tysk moms)", kr(o.carNet));
-      html += line("Levering", kr(o.delivery));
-      if (o.other) html += line("Øvrige omk.", kr(o.other));
-      html += line("Kostpris ekskl. moms", kr(o.cost));
-      html += line("Kostpris inkl. 25 % moms", kr(o.costInclDk), "total");
-      $("sum").textContent = kr(o.costInclDk);
     } else {
-      html += line("Bil (margin, ingen momsfradrag)", kr(o.car));
-      html += line("Levering", kr(o.delivery));
+      html += line("Bud inkl. tysk moms", kr(o.bidDkk));
+      html += line("Heraf tysk moms (19 %)", kr(o.deVat));
+      html += line("Dansk moms (25 % af netto)", kr(o.dkVat));
+      html += line("Forskelsmoms at betale", kr(o.diffVat));
+      html += line("Bil inkl. dansk moms", kr(o.carInclDk), "total");
+      html += line("Bil ekskl. moms", kr(o.carNet));
+      html += line("Levering ekskl. moms", kr(o.delivery));
       if (o.other) html += line("Øvrige omk.", kr(o.other));
-      html += line("Kostpris i alt", kr(o.cost), "total");
-      $("sum").textContent = kr(o.cost);
+      html += line("Kostpris i alt inkl. moms", kr(o.costInclDk));
+      $("sum").textContent = kr(o.carInclDk);
     }
     $("result").innerHTML = html;
 
     let s = "";
     if (state.saleDkk) {
-      if (state.bidEur) {
-        s += line(vat ? "Moms af salget" : "Brugtmoms (20 % af bruttoavancen)", kr(o.saleVat));
-        s += line("Avance efter moms", kr(o.profit), o.profit >= 0 ? "pos" : "neg");
-      }
+      if (state.bidEur) s += line("Avance ekskl. moms", kr(o.profit), o.profit >= 0 ? "pos" : "neg");
       s += `<div class="row max"><label>Maks bud</label><span class="out">${o.maxBid > 0 ? eur(Math.floor(o.maxBid)) : "–"}</span></div>`;
     }
     $("saleResult").innerHTML = s;
@@ -143,8 +127,6 @@
     // Aamperes egne tastaturgenveje skal ikke fange vores indtastning
     ["keydown", "keyup", "keypress"].forEach((t) => $(id).addEventListener(t, (e) => e.stopPropagation()));
   });
-  root.querySelectorAll(".seg button").forEach((b) =>
-    b.addEventListener("click", () => { state.mode = b.dataset.mode; state.modeManual = true; render(); }));
   root.querySelector("header").addEventListener("click", () => {
     state.collapsed = !state.collapsed; save(); render();
   });
@@ -172,10 +154,6 @@
 
   function scanPage() {
     const text = document.body?.innerText || "";
-    if (!state.modeManual) {
-      if (/marginally taxed|margin scheme|differenzbesteuer/i.test(text)) state.mode = "margin";
-      else if (/vat deductible|vat reclaimable|regelbesteuer|mwst\.? ausweisbar/i.test(text)) state.mode = "vat";
-    }
     if (!state.deliveryManual) {
       const m = text.match(/(?:delivery|lieferung)[^\n€]*\n?\s*([\d.,]+)\s*€/i);
       if (m && parseNum(m[1]) > 0) state.deliveryEur = parseNum(m[1]);
@@ -197,7 +175,7 @@
     timer = setTimeout(() => {
       if (location.href !== lastUrl) {
         lastUrl = location.href;
-        Object.assign(state, { bidEur: 0, saleDkk: 0, modeManual: false, deliveryManual: false });
+        Object.assign(state, { bidEur: 0, saleDkk: 0, deliveryManual: false });
         setInput("saleDkk", 0);
       }
       scanPage();
