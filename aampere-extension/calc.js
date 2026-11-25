@@ -1,36 +1,39 @@
 // Ren regnelogik – ingen DOM. Bruges af content.js (og kan testes i Node).
 //
-// Buddet er inkl. 19 % tysk moms. Den tyske momsandel modregnes i den danske
-// moms (25 % af nettoprisen), så der kun betales forskellen ("forskelsmoms"):
-//   netto        = bud / 1,19
-//   tysk moms    = bud - netto
-//   dansk moms   = netto × 0,25
+// Buddet er inkl. 19 % tysk moms. Dansk moms er 25 % af hele buddet (brutto),
+// og den tyske momsandel modregnes, så der betales forskellen ("forskelsmoms"):
+//   tysk moms    = bud × 19/119
+//   dansk moms   = bud × 0,25
 //   forskelsmoms = dansk moms - tysk moms
-//   pris inkl. dansk moms = bud + forskelsmoms = netto × 1,25
+//   bil inkl. dansk moms = bud + forskelsmoms
+// Bilen er momsdød (købt af privat) og kan ikke sælges ekskl. moms, så ved
+// videresalg regnes brugtmoms: 20 % af (salgspris - bil inkl. dansk moms).
 (function (root) {
-  const DE_VAT = 0.19;
+  const DE_SHARE = 0.19 / 1.19; // tysk momsandel af bruttoprisen
   const DK_VAT = 0.25;
+  const FACTOR = 1 + DK_VAT - DE_SHARE; // bud → bil inkl. dansk moms
+  const MARGIN_VAT = DK_VAT / (1 + DK_VAT); // brugtmoms: 20 % af differencen
 
   function calc(i) {
     const rate = i.rate;
     const delivery = (i.deliveryEur || 0) * rate; // netto
-    const other = i.otherDkk || 0; // ekskl. moms
-    const sale = i.saleDkk || 0; // inkl. dansk moms
+    const other = i.otherDkk || 0;
+    const sale = i.saleDkk || 0;
     const profitTarget = i.profitDkk || 0;
 
     const o = { delivery, other };
     o.bidDkk = (i.bidEur || 0) * rate;
-    o.carNet = o.bidDkk / (1 + DE_VAT);
-    o.deVat = o.bidDkk - o.carNet;
-    o.dkVat = o.carNet * DK_VAT;
+    o.deVat = o.bidDkk * DE_SHARE;
+    o.dkVat = o.bidDkk * DK_VAT;
     o.diffVat = o.dkVat - o.deVat;
-    o.carInclDk = o.carNet + o.dkVat;
-    o.cost = o.carNet + delivery + other; // ekskl. moms
-    o.costInclDk = o.cost * (1 + DK_VAT);
+    o.car = o.bidDkk + o.diffVat;
+    o.cost = o.car + delivery + other;
     if (sale) {
-      const saleNet = sale / (1 + DK_VAT);
-      o.profit = saleNet - o.cost;
-      o.maxBid = ((saleNet - profitTarget - delivery - other) * (1 + DE_VAT)) / rate;
+      o.saleVat = Math.max(0, sale - o.car) * MARGIN_VAT;
+      o.profit = sale - o.car - o.saleVat - delivery - other;
+      let maxCar = sale - (profitTarget + delivery + other) / (1 - MARGIN_VAT);
+      if (maxCar > sale) maxCar = sale - profitTarget - delivery - other; // tab: ingen brugtmoms
+      o.maxBid = maxCar / FACTOR / rate;
     }
     return o;
   }

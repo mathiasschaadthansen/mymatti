@@ -53,13 +53,13 @@
     <div class="row"><label>Bud (€)</label><input id="bidEur" inputmode="decimal" placeholder="fra siden"></div>
     <div class="row"><label>Kurs EUR/DKK</label><input id="rate" inputmode="decimal"></div>
     <div class="row"><label>Levering (€ netto)</label><input id="deliveryEur" inputmode="decimal"></div>
-    <div class="row"><label>Øvrige omk. (kr ekskl. moms)</label><input id="otherDkk" inputmode="decimal" placeholder="0"></div>
+    <div class="row"><label>Øvrige omk. (kr)</label><input id="otherDkk" inputmode="decimal" placeholder="0"></div>
     <div class="hint" id="rateHint"></div>
     <hr>
     <div id="result"></div>
     <hr>
-    <div class="row"><label>Salgspris inkl. moms (kr)</label><input id="saleDkk" inputmode="decimal" placeholder="valgfri"></div>
-    <div class="row"><label>Ønsket avance (kr ekskl. moms)</label><input id="profitDkk" inputmode="decimal" placeholder="0"></div>
+    <div class="row"><label>Salgspris, brugtmoms (kr)</label><input id="saleDkk" inputmode="decimal" placeholder="valgfri"></div>
+    <div class="row"><label>Ønsket avance (kr)</label><input id="profitDkk" inputmode="decimal" placeholder="0"></div>
     <div id="saleResult"></div>
   </div>
 </div>`;
@@ -85,20 +85,22 @@
     } else {
       html += line("Bud inkl. tysk moms", kr(o.bidDkk));
       html += line("Heraf tysk moms (19 %)", kr(o.deVat));
-      html += line("Dansk moms (25 % af netto)", kr(o.dkVat));
+      html += line("Dansk moms (25 % af buddet)", kr(o.dkVat));
       html += line("Forskelsmoms at betale", kr(o.diffVat));
-      html += line("Bil inkl. dansk moms", kr(o.carInclDk), "total");
-      html += line("Bil ekskl. moms", kr(o.carNet));
+      html += line("Bil inkl. dansk moms", kr(o.car), "total");
       html += line("Levering ekskl. moms", kr(o.delivery));
       if (o.other) html += line("Øvrige omk.", kr(o.other));
-      html += line("Kostpris i alt inkl. moms", kr(o.costInclDk));
-      $("sum").textContent = kr(o.carInclDk);
+      html += line("Kostpris i alt", kr(o.cost));
+      $("sum").textContent = kr(o.car);
     }
     $("result").innerHTML = html;
 
     let s = "";
     if (state.saleDkk) {
-      if (state.bidEur) s += line("Avance ekskl. moms", kr(o.profit), o.profit >= 0 ? "pos" : "neg");
+      if (state.bidEur) {
+        s += line("Brugtmoms (20 % af differencen)", kr(o.saleVat));
+        s += line("Avance efter brugtmoms", kr(o.profit), o.profit >= 0 ? "pos" : "neg");
+      }
       s += `<div class="row max"><label>Maks bud</label><span class="out">${o.maxBid > 0 ? eur(Math.floor(o.maxBid)) : "–"}</span></div>`;
     }
     $("saleResult").innerHTML = s;
