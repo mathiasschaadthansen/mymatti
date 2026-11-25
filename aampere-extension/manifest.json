@@ -1,0 +1,16 @@
+{
+  "manifest_version": 3,
+  "name": "Aampere bud → DKK",
+  "version": "1.0.0",
+  "description": "Regner dit Aampere-bud i euro om til dansk kostpris i DKK (margin-moms eller fuld moms) – og baglæns til maks bud.",
+  "permissions": ["storage"],
+  "host_permissions": ["https://api.frankfurter.dev/*"],
+  "background": { "service_worker": "background.js" },
+  "content_scripts": [
+    {
+      "matches": ["*://aampere.com/*", "*://*.aampere.com/*"],
+      "js": ["calc.js", "content.js"],
+      "run_at": "document_idle"
+    }
+  ]
+}
