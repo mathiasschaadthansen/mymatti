@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" fill="#2E5E4E"/>
+  <g transform="translate(256 256) scale(0.84) translate(-256 -262)">
+  <!-- tallerken -->
+  <circle cx="256" cy="262" r="160" fill="#F6EFE3"/>
+  <circle cx="256" cy="262" r="118" fill="#FFFFFF"/>
+  <!-- hjerte af grønt -->
+  <path d="M256 330 C256 330 184 288 184 238 C184 210 206 194 228 200 C242 204 250 214 256 224 C262 214 270 204 284 200 C306 194 328 210 328 238 C328 288 256 330 256 330 Z" fill="#F2A65A"/>
+  <path d="M226 236 C238 226 250 230 256 244" stroke="#FFFFFF" stroke-width="8" stroke-linecap="round" fill="none" opacity=".7"/>
+  <!-- gaffel og kniv -->
+  <rect x="58" y="150" width="16" height="230" rx="8" fill="#F6EFE3"/>
+  <path d="M50 150 v54 a16 16 0 0 0 32 0 v-54" stroke="#F6EFE3" stroke-width="8" fill="none"/>
+  <path d="M446 150 C470 170 470 230 446 250 V380" stroke="#F6EFE3" stroke-width="16" stroke-linecap="round" fill="none"/>
+</g>
+</svg>
