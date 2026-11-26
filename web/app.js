@@ -124,7 +124,7 @@ function viewOverblik(v) {
   if (soon.length) html += `<h2>Brug først</h2><ul class="plain">${soon.map((i) => `<li class="card tight"><div class="item-head"><b>${esc(i.name)}</b><span class="qty">${fmt(i.qty, i.unit)}</span></div><p class="muted">${esc(i.location)} · ${freshness(i)}</p></li>`).join("")}</ul>`;
   if (low.length) html += `<h2>Faste varer, der er ved at slippe op</h2><ul class="plain">${low.map((i) => `<li class="card tight"><div class="item-head"><b>${esc(i.name)}</b><span class="qty">${fmt(i.qty, i.unit)} af ${fmt(i.min_qty, i.unit)}</span></div></li>`).join("")}</ul><p class="muted">De er lagt på indkøbslisten automatisk.</p>`;
   if (v.profile.allergens.length || v.profile.other.length) {
-    html += `<h2>Familiens allergier</h2><ul class="plain">${[...v.profile.allergens, ...v.profile.other].map((a) => `<li>${esc(a.label)} – ${esc(a.who.join(", "))}</li>`).join("")}</ul><p class="muted">${DISCLAIMER}</p>`;
+    html += `<h2>Familiens allergier</h2><ul class="plain">${[...v.profile.allergens, ...v.profile.other].map((a) => `<li>${esc(a.label)} – ${esc(a.who.join(", "))}</li>`).join("")}${(v.profile.tolerates ?? []).map((t) => `<li class="muted">${esc(t.who)} tåler alligevel: ${esc(t.terms.join(", "))}</li>`).join("")}</ul><p class="muted">${DISCLAIMER}</p>`;
   }
   if (S.recalls && !S.recalls.error) {
     html += `<details class="card"><summary>Seneste tilbagekald fra Fødevarestyrelsen (${S.recalls.total})</summary><ul class="plain">${S.recalls.latest.map((r) => `<li><a href="${esc(r.link)}" target="_blank" rel="noopener">${esc(r.title)}</a> <span class="muted">${esc(r.published ?? "")}</span></li>`).join("")}</ul>
@@ -268,7 +268,7 @@ function viewFamilie(v) {
   let html = `<h1>Familie</h1>` + v.family.map((m) => {
     const labels = [...m.allergies.map((k) => v.allergen_options.find((o) => o.key === k)?.label.split(" (")[0]), m.other_allergies].filter(Boolean);
     return `<div class="card"><div class="item-head"><b>${esc(m.name)}</b><button data-act="member-edit" data-id="${m.id}">Ret</button></div>
-      <p class="muted">${labels.length ? esc(labels.join(", ")) : "Ingen allergier"}${m.dislikes ? ` · kan ikke lide: ${esc(m.dislikes)}` : ""}</p></div>`;
+      <p class="muted">${labels.length ? esc(labels.join(", ")) : "Ingen allergier"}${m.tolerates ? ` · tåler alligevel: ${esc(m.tolerates)}` : ""}${m.dislikes ? ` · kan ikke lide: ${esc(m.dislikes)}` : ""}</p></div>`;
   }).join("");
   html += `<button class="primary" data-act="member-edit">Tilføj familiemedlem</button><p class="muted">${DISCLAIMER}</p>
     <h2>Farvetema</h2><div class="chips">${THEMES.map(([key, label]) => `<button class="chip" data-act="theme" data-theme-key="${key}" aria-pressed="${theme === key}">${label}</button>`).join("")}</div>
@@ -322,6 +322,7 @@ function sheetMember(m) {
     <label>Navn<input name="name" value="${esc(m.name ?? "")}" required maxlength="40"></label>
     <fieldset class="stack"><legend class="muted">Allergier og intolerancer</legend>${S.view.allergen_options.map((o) => `<label class="check"><input type="checkbox" name="allergy" value="${o.key}"${(m.allergies ?? []).includes(o.key) ? " checked" : ""}>${esc(o.label)}</label>`).join("")}</fieldset>
     <label>Andre allergier (adskil med komma)<input name="other_allergies" value="${esc(m.other_allergies ?? "")}" maxlength="200" placeholder="Fx oksekød, græskar, kiwi"></label>
+    <label>Tåler alligevel (undtagelser, adskil med komma)<input name="tolerates" value="${esc(m.tolerates ?? "")}" maxlength="200" placeholder="Fx mandler"></label>
     <label>Kan ikke lide (ikke allergi)<input name="dislikes" value="${esc(m.dislikes ?? "")}" maxlength="200" placeholder="Fx svampe, oliven"></label>
     <div class="row"><button class="primary grow">Gem</button><button type="button" data-act="sheet-close">Luk</button>
     ${m.id ? `<button type="button" class="danger" data-act="member-delete" data-id="${m.id}">Slet</button>` : ""}</div></form>`);
@@ -375,7 +376,7 @@ const FORMS = {
     if (ok) closeSheet();
   },
   member: async (f, form) => {
-    const member = { id: form.dataset.id || undefined, name: f.get("name"), allergies: f.getAll("allergy"), other_allergies: f.get("other_allergies"), dislikes: f.get("dislikes") };
+    const member = { id: form.dataset.id || undefined, name: f.get("name"), allergies: f.getAll("allergy"), other_allergies: f.get("other_allergies"), dislikes: f.get("dislikes"), tolerates: f.get("tolerates") };
     if (await api("family_save", { member })) closeSheet();
   },
   settings: async (f) => { if (await api("settings_save", { persons: f.get("persons"), budget_month: f.get("budget_month"), shop_prefs: f.get("shop_prefs"), traces_ok: f.get("traces_ok") === "on" })) toast("Indstillinger gemt"); },

@@ -66,6 +66,7 @@ export function view(state: State, deps: Deps): Any {
     profile: {
       allergens: Object.entries(profile.allergens).map(([k, who]) => ({ label: L.allergenLabel(k), who })),
       other: Object.entries(profile.other).map(([term, who]) => ({ label: term, who })),
+      tolerates: Object.entries(profile.tolerates).map(([who, terms]) => ({ who, terms })),
     },
     settings: state.settings,
     inventory: [...state.inventory]
@@ -118,7 +119,7 @@ export async function act(state: State, action: string, p: Any, deps: Deps): Pro
       const data = {
         name,
         allergies: (Array.isArray(m.allergies) ? m.allergies : []).filter((a: Any) => a in ALLERGENS),
-        other_allergies: text(m.other_allergies), dislikes: text(m.dislikes),
+        other_allergies: text(m.other_allergies), dislikes: text(m.dislikes), tolerates: text(m.tolerates),
       };
       const existing = state.family.find((x: Any) => x.id === m.id);
       if (existing) Object.assign(existing, data);

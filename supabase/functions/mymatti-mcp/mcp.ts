@@ -7,6 +7,7 @@ export type Store = { load: () => Promise<State>; save: (state: State) => Promis
 const INSTRUCTIONS = `Mymatti er en dansk families madlager, allergier og indkøbsliste.
 - Kald altid get_household først. Svar på dansk.
 - Allergierne er absolutte krav. Aftensmad skal kunne tåles af alle i familien, medmindre brugeren siger andet.
+- "taaler_alligevel" er undtagelser, personen godt kan tåle (fx mandler trods nøddeallergi); check_allergens tager højde for dem.
 - Kald check_allergens med alle ingredienser, før du foreslår en ret eller et produkt, og foreslå aldrig noget, der giver en advarsel.
   Tjekket er ordbaseret og kan overse noget: brug også din egen viden om skjulte allergener, og bed brugeren læse varedeklarationen.
 - Brug lagerets varer først, især dem der udløber snart. Opdatér lageret med update_inventory, når brugeren har lavet en ret.
@@ -151,6 +152,7 @@ function household(state: State): Any {
       allergier: (m.allergies ?? []).map(L.allergenLabel),
       andre_allergier: m.other_allergies || null,
       kan_ikke_lide: m.dislikes || null,
+      taaler_alligevel: m.tolerates || null,
     })),
     regler: {
       spor_af: state.settings.traces_ok ? "Varer mærket 'kan indeholde spor af' er i orden." : "Undgå også varer mærket 'kan indeholde spor af'.",

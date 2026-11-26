@@ -111,6 +111,7 @@ export function buildRecipePrompt(inventory: Any[], profile: Profile, opts: Any)
   const forbidden = [
     ...Object.entries(profile.allergens).map(([k, who]) => `- ${L.allergenLabel(k)} (gælder: ${who.join(", ")})`),
     ...Object.entries(profile.other).map(([term, who]) => `- ${term} (gælder: ${who.join(", ")})`),
+    ...Object.entries(profile.tolerates).map(([who, terms]) => `- UNDTAGELSE: ${who} tåler alligevel ${terms.join(", ")}`),
   ];
   return `Du er en dansk hverdagskok, der hjælper en familie med at bruge det, de allerede har,
 så mindst muligt går til spilde.
@@ -169,9 +170,11 @@ export function finalizeRecipe(recipe: Any, inventory: Any[], profile: Profile):
   recipe.allergens = (Array.isArray(recipe.allergens) ? recipe.allergens : []).filter((a: Any) => a in ALLERGENS);
   const hits = L.checkRecipe(recipe, profile);
   for (const key of recipe.allergens) {
-    if (key in profile.allergens && !hits.some((h) => h.includes(L.allergenLabel(key)))) {
-      hits.push(`${L.allergenLabel(key)} (${profile.allergens[key].join(", ")}) – angivet af AI`);
-    }
+    if (!(key in profile.allergens) || hits.some((h) => h.includes(L.allergenLabel(key)))) continue;
+    // Personer med en undtagelse (fx tåler mandler) er dækket af ordtjekket ovenfor; AI'ens angivelse
+    // kan ikke skelne mandler fra andre nødder.
+    const who = profile.allergens[key].filter((name) => !profile.tolerates[name]?.length);
+    if (who.length) hits.push(`${L.allergenLabel(key)} (${who.join(", ")}) – angivet af AI`);
   }
   recipe.allergy_hits = hits;
   return recipe;

@@ -224,12 +224,40 @@ function searchTerms(term: string): string[] {
   return [term.length > 4 && /[er]$/.test(term) ? term.slice(0, -1) : term];
 }
 
-export type Profile = { allergens: Record<string, string[]>; other: Record<string, string[]>; dislikes: string[]; names: string[] };
+export type Profile = {
+  allergens: Record<string, string[]>; other: Record<string, string[]>; dislikes: string[]; names: string[];
+  /** Undtagelser pr. person, fx { A: ["mandler"] } for nøddeallergi, der tåler mandler. */
+  tolerates: Record<string, string[]>;
+};
+
+// Ord, der fjernes fra en tekst, når en person tåler en undtagelse. Længste ord først.
+const TOLERANCE_ALIASES: [string, string[]][] = [
+  ["mand", ["mandelmælk", "mandelmel", "mandelsmør", "mandelflager", "marcipan", "mandler", "mandel"]],
+  ["hassel", ["hasselnødder", "hasselnød"]],
+  ["valnød", ["valnødder", "valnød"]],
+  ["cashew", ["cashewnødder", "cashew"]],
+  ["pistacie", ["pistacienødder", "pistacier", "pistacie"]],
+  ["kokos", ["kokosmælk", "kokosmel", "kokos"]],
+];
+
+function toleranceWords(term: string): string[] {
+  for (const [prefix, words] of TOLERANCE_ALIASES) if (term.startsWith(prefix)) return words;
+  return [term.length > 4 && /(er|r|e)$/.test(term) ? term.replace(/(er|r|e)$/, "") : term];
+}
+
+/** Tåler personen denne tekst trods sin allergi? Ja, hvis allergenet forsvinder, når undtagelserne fjernes. */
+function tolerated(name: string, key: string, text: string, profile: Profile): boolean {
+  const terms = profile.tolerates[name];
+  if (!terms?.length) return false;
+  let low = String(text ?? "").toLowerCase();
+  for (const term of terms) for (const word of toleranceWords(term)) low = low.replaceAll(word, " ");
+  return !allergensIn(low).includes(key);
+}
 
 export function familyProfile(state: State, eaters?: string[] | null): Profile {
   const wanted = eaters && eaters.length ? eaters.map((e) => e.toLowerCase()) : null;
   const members = state.family.filter((m: Any) => !wanted || wanted.includes(String(m.name).toLowerCase()) || wanted.includes(m.id));
-  const profile: Profile = { allergens: {}, other: {}, dislikes: [], names: members.map((m: Any) => m.name) };
+  const profile: Profile = { allergens: {}, other: {}, dislikes: [], names: members.map((m: Any) => m.name), tolerates: {} };
   for (const m of members) {
     for (const key of m.allergies ?? []) if (key in ALLERGENS) (profile.allergens[key] ??= []).push(m.name);
     for (const part of String(m.other_allergies ?? "").split(/[,;\n]+/)) {
@@ -237,6 +265,8 @@ export function familyProfile(state: State, eaters?: string[] | null): Profile {
       if (term.length >= 3) (profile.other[term] ??= []).push(m.name);
     }
     if (String(m.dislikes ?? "").trim()) profile.dislikes.push(`${m.name}: ${String(m.dislikes).trim()}`);
+    const tol = String(m.tolerates ?? "").split(/[,;\n]+/).map((t) => t.trim().toLowerCase()).filter((t) => t.length >= 3);
+    if (tol.length) profile.tolerates[m.name] = tol;
   }
   return profile;
 }
@@ -244,7 +274,9 @@ export function familyProfile(state: State, eaters?: string[] | null): Profile {
 export function checkText(text: string, profile: Profile): string[] {
   const hits: string[] = [];
   for (const key of allergensIn(text).sort()) {
-    if (key in profile.allergens) hits.push(`${allergenLabel(key)} (${profile.allergens[key].join(", ")})`);
+    if (!(key in profile.allergens)) continue;
+    const who = profile.allergens[key].filter((name) => !tolerated(name, key, text, profile));
+    if (who.length) hits.push(`${allergenLabel(key)} (${who.join(", ")})`);
   }
   const low = String(text ?? "").toLowerCase();
   for (const [term, who] of Object.entries(profile.other)) {

@@ -82,4 +82,21 @@ const feed = parseFeed(`<rss><channel><item><title>Tilbagekald - udeklareret æg
 assert.deepEqual([feed.length, feed[0].published, feed[1].published, feed[0].description.includes("æg & mere")], [2, "2026-11-06", null, true]);
 const s2 = normalizeState({ family: [{ id: "a", name: "Far", allergies: ["aeg"] }], inventory: [{ id: "i", name: "Byggryn", qty: 1, unit: "pk" }] });
 assert.deepEqual(relevant(feed, s2, familyProfile(s2)).map((r) => [r.link, r.items, r.allergens]), [["https://x/1", [], ["Æg"]], ["https://x/2", ["Byggryn"], []]]);
+// Undtagelser: nøddeallergi, men tåler mandler
+const s3 = normalizeState({ family: [
+  { id: "a", name: "A", allergies: ["noedder", "maelk"], tolerates: "mandler" },
+  { id: "b", name: "B", allergies: ["noedder"] },
+] });
+const pA = familyProfile(s3, ["A"]), pAll = familyProfile(s3);
+const { checkText } = await import("../supabase/functions/mymatti-mcp/logic.ts");
+assert.deepEqual(checkText("Marcipan", pA), []);
+assert.deepEqual(checkText("Mandler", pA), []);
+assert.deepEqual(checkText("Mandelmælk", pA), []);
+assert.equal(checkText("Hasselnødder", pA).length, 1);
+assert.equal(checkText("Mandel- og hasselnøddeblanding", pA).length, 1);
+assert.equal(checkText("Mælkechokolade med mandler", pA)[0].startsWith("Mælk"), true);
+assert.deepEqual(checkText("Marcipan", pAll), ["Nødder (mandler, hasselnødder, valnødder m.fl.) (B)"]);
+const { buildRecipePrompt } = await import("../supabase/functions/mymatti-mcp/ai.ts");
+assert.ok(buildRecipePrompt([], pAll, { count: 1, meal: "Aftensmad", persons: 2, max_time: 20, max_missing: 0 }).includes("A tåler alligevel mandler"));
+
 console.log("ok – API-handlinger, reservetolkning, opskriftstjek og tilbagekald virker");
