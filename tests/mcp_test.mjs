@@ -10,7 +10,7 @@ Boghvedemel|Glutenfri pasta|Spaghetti|Karamel|Muskatnød|Hasselnødder|Mandler|L
 Laktosefri mælk|Vegansk ost|Piskefløde|Æggeplante|Hakket oksekød|Rugbrød|Plantesmør|Havremælk|Knækbrød|Frisk pasta|Mayo
 Rødvin|Hvidvin|Vineddike|Blæksprutte|Fiskefrikadeller|Kødboller|Boller|Is|Ispinde|Flødeis|Kærnemælk|Østers|Æblemost|Rosiner
 Pesto|Dijonsennep|Selleri|Bladselleri|Hummus|Tofu|Øl|Ølgær|Byggryn|Perlebyg|Tun|Tunfisk|Mel|Kokosmel|Smørepålæg|Ost|Kost
-Skyr|Crème fraîche|Creme fraiche 18%|Peanutbutter|Nøddeblanding|Kokosnød|RØDSPÆTTEFILET|Æggenudler|Risnudler|Wraps|Pizzadej`
+Skyr|Tørrede kikærter|Regnbueørred|Crème fraîche|Creme fraiche 18%|Peanutbutter|Nøddeblanding|Kokosnød|RØDSPÆTTEFILET|Æggenudler|Risnudler|Wraps|Pizzadej`
   .split(/[|\n]/);
 
 const expected = JSON.parse(execFileSync("python3", ["-c",

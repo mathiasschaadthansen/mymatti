@@ -110,3 +110,10 @@ def test_free_text_aliases_budget_and_prompt():
     prompt = core.handle_prompt(s, profile)
     assert "økologisk" in prompt and "spor af' er i orden" in prompt and "oksekød" in prompt
     assert "ikke bestille eller betale" in prompt
+
+
+@pytest.mark.parametrize("text,expected", [
+    ("Tørrede kikærter", set()), ("Tørrede tomater", set()), ("Ørred", {"fisk"}), ("Regnbueørred", {"fisk"}),
+])
+def test_oerred_vs_toerrede(text, expected):
+    assert core.allergens_in(text) == expected

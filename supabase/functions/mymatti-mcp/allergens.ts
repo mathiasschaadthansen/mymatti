@@ -17,7 +17,7 @@ export const ALLERGENS: Record<string, { label: string; pattern: string; ignore?
  },
  "fisk": {
   "label": "Fisk",
-  "pattern": "fisk|laks|torsk|(?<![\\p{L}\\p{N}_])tun(?![\\p{L}\\p{N}_])|sild|makrel|ansjos|rødspætte|(?<![\\p{L}\\p{N}_])sej(?![\\p{L}\\p{N}_])|kuller|ørred|kaviar|rogn|worcestershire|sardin|pangasius|kulmule|(?<![\\p{L}\\p{N}_])ål(?![\\p{L}\\p{N}_])",
+  "pattern": "fisk|laks|torsk|(?<![\\p{L}\\p{N}_])tun(?![\\p{L}\\p{N}_])|sild|makrel|ansjos|rødspætte|(?<![\\p{L}\\p{N}_])sej(?![\\p{L}\\p{N}_])|kuller|(?<!t)ørred|kaviar|rogn|worcestershire|sardin|pangasius|kulmule|(?<![\\p{L}\\p{N}_])ål(?![\\p{L}\\p{N}_])",
   "ignore": "blæksprutte[\\p{L}\\p{N}_]*"
  },
  "jordnoedder": {

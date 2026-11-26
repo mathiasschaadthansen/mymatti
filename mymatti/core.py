@@ -326,7 +326,7 @@ ALLERGENS: dict[str, dict] = {
     },
     "fisk": {
         "label": "Fisk",
-        "pattern": r"fisk|laks|torsk|\btun\b|sild|makrel|ansjos|rødspætte|\bsej\b|kuller|ørred"
+        "pattern": r"fisk|laks|torsk|\btun\b|sild|makrel|ansjos|rødspætte|\bsej\b|kuller|(?<!t)ørred"
                    r"|kaviar|rogn|worcestershire|sardin|pangasius|kulmule|\bål\b",
         "ignore": r"blæksprutte\w*",
     },
